@@ -240,8 +240,35 @@ I test di integrazione hanno la categoria `[Category("Integration")]` e ricreano
 - `health` mostra ora anche il controllo 4 (DB presente) e il 9 (dimensione colonne) **OK**.
 - Build della solution e test verdi.
 
+## 7 bis. Esito (2026-09-25)
+
+Criteri di completamento verificati:
+- `DbInit -- --no-seed` crea `Sinistri` con 11 tabelle, `IX_Sinistro_Filtri`, `IX_Sinistro_PolizzaId` e le 5 lookup (2 prodotti, 4 tipi di clausola, 11 cause, 3 stati, 3 provider). Rieseguito riparte da zero;
+- con `Server=sqlprod01` e senza `--allow-non-local`: rifiuto con codice 1. Con `EMBEDDING_DIMENSIONS=abc`: messaggio di configurazione non valida, codice 1;
+- `health`: controlli 1–9 OK, con esito globale "OK". Con `EMBEDDING_DIMENSIONS=1024` il controllo 9 fallisce: *"il database ha Clausola.Embedding VECTOR(768), Sinistro.Embedding VECTOR(768) ma EMBEDDING_DIMENSIONS=1024: rieseguire DbInit"*;
+- build della solution senza warning; 57 test verdi, compresi quelli di integrazione su `Sinistri_Test`.
+
+Scostamenti:
+
+| Punto | Previsto | Fatto | Motivo |
+|---|---|---|---|
+| Firma dell'inizializzatore | `RecreateAsync(connectionString, embeddingDimensions, seed)` | `RecreateAsync(connectionString, embeddingDimensions, cancellationToken)`: schema e lookup | il seed arriva con la Fase 3 e sarà un passo separato di `DbInit`, come in O2C; `--no-seed` è già accettato |
+| Dimensione delle colonne | colonna di `sys.columns` da verificare | `sys.columns.vector_dimensions` (SQL Server 2025, verificato su LocalDB) | — |
+| Controllo 9 di `health` | dimensione delle colonne | dimensione **e** `EmbeddingInfo` (modello, provider, dimensione) contro la configurazione; senza embedding calcolati è OK con la nota "comando embed, Fase 4" | un modello diverso a parità di dimensione darebbe vettori incompatibili senza errori |
+| Metadati degli enum | — | `EnumMetadata` in Core: `Descrizione()`, `ProdottoDellaCausa()`, `Cause()`, mappa da `EMBEDDING_PROVIDER` all'enum `EmbeddingProvider` | usati da lookup, health e dalle fasi 3 e 8 |
+| `--parafrasa-con-llm` | opzione di `DbInit` | non ancora | riguarda il seed (Fase 3) |
+
 ## 8. Commit proposto (non eseguito)
 
 ```
 fase 2: schema database con tabelle di lookup e tool DbInit
+
+Script db/001_create_database.sql e db/002_schema.sql con variabili sqlcmd,
+incorporati nell'assembly Data ed eseguiti da SqlScriptRunner (split su GO,
+variabili validate). DatabaseInitializer ricrea il database da zero come in O2C
+e popola le lookup dagli enum di dominio. Tool DbInit con protezione LocalDB.
+health: controllo 9 su dimensione delle colonne VECTOR ed EmbeddingInfo.
+
+Verifica: build della solution, 57 test verdi (integrazione su Sinistri_Test
+con VECTOR(4)), DbInit rieseguibile, health OK con VECTOR(768).
 ```

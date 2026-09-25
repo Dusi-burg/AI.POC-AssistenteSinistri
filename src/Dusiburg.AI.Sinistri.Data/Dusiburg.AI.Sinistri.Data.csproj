@@ -10,6 +10,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Script di db/ incorporati: DbInit e i test li trovano senza dipendere dalla cartella di lavoro (fase-2.md §3) -->
+    <EmbeddedResource Include="..\..\db\*.sql" LogicalName="%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="Dusiburg.AI.Sinistri.Tests" />
   </ItemGroup>
 
