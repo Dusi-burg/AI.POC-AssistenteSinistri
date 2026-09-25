@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Banco di prova degli embedding (Fase 1b): stessi casi su più modelli e chip, report comparativo. -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Dusiburg.AI.Sinistri.Core\Dusiburg.AI.Sinistri.Core.csproj" />
+    <ProjectReference Include="..\..\src\Dusiburg.AI.Sinistri.Ai\Dusiburg.AI.Sinistri.Ai.csproj" />
+  </ItemGroup>
+
+</Project>

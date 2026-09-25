@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Ricrea da zero il database Sinistri: schema, lookup, clausole e dati sintetici (D17). Implementato in Fase 2. -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Dusiburg.AI.Sinistri.Core\Dusiburg.AI.Sinistri.Core.csproj" />
+    <ProjectReference Include="..\..\src\Dusiburg.AI.Sinistri.Data\Dusiburg.AI.Sinistri.Data.csproj" />
+    <ProjectReference Include="..\..\src\Dusiburg.AI.Sinistri.Ingestion\Dusiburg.AI.Sinistri.Ingestion.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- Runner NUnit su Microsoft.Testing.Platform, come impostato in global.json -->
+    <EnableNUnitRunner>true</EnableNUnitRunner>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="NUnit.Framework" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit3TestAdapter" />
+    <PackageReference Include="NUnit.Analyzers" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- API e UI in-process con WebApplicationFactory: Ollama e SQL sostituiti da probe finti -->
+    <ProjectReference Include="..\..\src\Dusiburg.AI.Sinistri.Api\Dusiburg.AI.Sinistri.Api.csproj" />
+    <ProjectReference Include="..\..\src\Dusiburg.AI.Sinistri.Web\Dusiburg.AI.Sinistri.Web.csproj" />
+  </ItemGroup>
+
+</Project>

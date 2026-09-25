@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Dati sintetici e pipeline di embedding: riempito nelle Fasi 3 e 4. -->
+  <ItemGroup>
+    <PackageReference Include="Bogus" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Dusiburg.AI.Sinistri.Core\Dusiburg.AI.Sinistri.Core.csproj" />
+    <ProjectReference Include="..\Dusiburg.AI.Sinistri.Data\Dusiburg.AI.Sinistri.Data.csproj" />
+    <ProjectReference Include="..\Dusiburg.AI.Sinistri.Ai\Dusiburg.AI.Sinistri.Ai.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Dusiburg.AI.Sinistri.Tests" />
+  </ItemGroup>
+
+</Project>
