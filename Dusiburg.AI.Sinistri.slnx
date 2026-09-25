@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Dusiburg.AI.Sinistri.Ai/Dusiburg.AI.Sinistri.Ai.csproj" />
+    <Project Path="src/Dusiburg.AI.Sinistri.Api/Dusiburg.AI.Sinistri.Api.csproj" />
+    <Project Path="src/Dusiburg.AI.Sinistri.AppHost/Dusiburg.AI.Sinistri.AppHost.csproj" />
+    <Project Path="src/Dusiburg.AI.Sinistri.Cli/Dusiburg.AI.Sinistri.Cli.csproj" />
+    <Project Path="src/Dusiburg.AI.Sinistri.Core/Dusiburg.AI.Sinistri.Core.csproj" />
+    <Project Path="src/Dusiburg.AI.Sinistri.Data/Dusiburg.AI.Sinistri.Data.csproj" />
+    <Project Path="src/Dusiburg.AI.Sinistri.Ingestion/Dusiburg.AI.Sinistri.Ingestion.csproj" />
+    <Project Path="src/Dusiburg.AI.Sinistri.ServiceDefaults/Dusiburg.AI.Sinistri.ServiceDefaults.csproj" />
+    <Project Path="src/Dusiburg.AI.Sinistri.Web/Dusiburg.AI.Sinistri.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Dusiburg.AI.Sinistri.Tests/Dusiburg.AI.Sinistri.Tests.csproj" />
+    <Project Path="tests/Dusiburg.AI.Sinistri.Web.Tests/Dusiburg.AI.Sinistri.Web.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/Dusiburg.AI.Sinistri.DbInit/Dusiburg.AI.Sinistri.DbInit.csproj" />
+    <Project Path="tools/Dusiburg.AI.Sinistri.EmbeddingBench/Dusiburg.AI.Sinistri.EmbeddingBench.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Dominio, opzioni e servizi applicativi: dipendono solo da interfacce, nessun accesso a SQL o ai modelli. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Dusiburg.AI.Sinistri.Tests" />
+  </ItemGroup>
+
+</Project>

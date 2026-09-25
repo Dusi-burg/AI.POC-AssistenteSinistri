@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!-- UI della demo (D16): nessun accesso al database né ai modelli, solo HTTP verso l'API -->
+  <ItemGroup>
+    <ProjectReference Include="..\Dusiburg.AI.Sinistri.ServiceDefaults\Dusiburg.AI.Sinistri.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Dusiburg.AI.Sinistri.Core\Dusiburg.AI.Sinistri.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Dusiburg.AI.Sinistri.Web.Tests" />
+  </ItemGroup>
+
+</Project>

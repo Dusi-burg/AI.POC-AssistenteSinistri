@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- Runner NUnit su Microsoft.Testing.Platform, come impostato in global.json -->
+    <EnableNUnitRunner>true</EnableNUnitRunner>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="NUnit.Framework" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit3TestAdapter" />
+    <PackageReference Include="NUnit.Analyzers" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Unit e integrazione di Core, Data, Ai, Ingestion e DbInit: modelli finti, nessuna chiamata a Ollama -->
+    <ProjectReference Include="..\..\src\Dusiburg.AI.Sinistri.Core\Dusiburg.AI.Sinistri.Core.csproj" />
+    <ProjectReference Include="..\..\src\Dusiburg.AI.Sinistri.Data\Dusiburg.AI.Sinistri.Data.csproj" />
+    <ProjectReference Include="..\..\src\Dusiburg.AI.Sinistri.Ai\Dusiburg.AI.Sinistri.Ai.csproj" />
+    <ProjectReference Include="..\..\src\Dusiburg.AI.Sinistri.Ingestion\Dusiburg.AI.Sinistri.Ingestion.csproj" />
+    <ProjectReference Include="..\..\tools\Dusiburg.AI.Sinistri.DbInit\Dusiburg.AI.Sinistri.DbInit.csproj" />
+  </ItemGroup>
+
+</Project>

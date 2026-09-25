@@ -1,0 +1,14 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.5.4">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AspireUseCliBundle>true</AspireUseCliBundle>
+    <UserSecretsId>fdf26212-2348-4c81-a6b5-de897910daf9</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Dusiburg.AI.Sinistri.Api\Dusiburg.AI.Sinistri.Api.csproj" />
+    <ProjectReference Include="..\Dusiburg.AI.Sinistri.Web\Dusiburg.AI.Sinistri.Web.csproj" />
+  </ItemGroup>
+
+</Project>
