@@ -129,8 +129,43 @@ Classi coinvolte: `EmbeddingService` (Ai), `EmbeddingTextBuilder` (Core), `Embed
 - Il riepilogo di fase dice quale strada è stata usata (tipo nativo `SqlVector` o fallback JSON).
 - Build della solution e test verdi.
 
+## 6 bis. Esito (2026-09-25)
+
+Criteri di completamento verificati su un DB di verifica (`Sinistri_Verifica`, poi eliminato, per non cancellare `Sinistri`) appena popolato da DbInit, con `ollama` / `embeddinggemma` / 768 su CPU:
+- `embed`: 60 clausole in 5 s, 410 sinistri in 19 s, **470 vettori in 24 s**; righe con `Embedding` NULL: 0;
+- `embed --solo-mancanti` subito dopo: "0 elementi da elaborare";
+- `health`: controlli 1–10 OK, il 9 riporta "embedding di embeddinggemma (Ollama)", il 10 "embedding 100% CPU";
+- **strada usata: tipo nativo `SqlVector<float>`** (Microsoft.Data.SqlClient 7.1) con un parametro Dapper su misura; il fallback JSON + `CAST` non è servito;
+- build della solution senza warning; 95 test verdi (16 nuovi: testo da vettorizzare, profili, servizio con generatore finto, repository e pipeline su `Sinistri_Test` con `VECTOR(4)`).
+
+Latenza rispetto al banco della Fase 1b: il banco stimava 11 s per 470 testi (43,6 testi/s); la pipeline reale fa circa 20 testi/s. I testi reali sono più lunghi di quelli del banco (clausole di 2–6 frasi, sinistri con esito di perizia) e ogni batch viene scritto su SQL.
+
+Scostamenti:
+
+| Punto | Previsto | Fatto | Motivo |
+|---|---|---|---|
+| Riduzione MRL | chiesta al runtime (`dimensions`) quando possibile, altrimenti troncamento | sempre troncamento con rinormalizzazione in `EmbeddingService` | il parametro non è uniforme tra i provider; con `embeddinggemma` a 768 la riduzione non entra in gioco |
+| Controllo del modello | `--solo-mancanti` rifiutato se `EmbeddingInfo` è di un altro modello o provider | rifiutato anche `--solo clausole` o `--solo sinistri` | altrimenti una tabella resterebbe con i vettori del modello vecchio mentre `EmbeddingInfo` indica quello nuovo |
+| Controllo all'avvio | modello presente e dimensione coerente | la pipeline controlla la dimensione delle colonne; un modello assente fallisce al primo batch con l'errore del runtime (4xx, niente retry) | evita di dipendere dai controlli della chat, non necessari a `embed` |
+| `IVectorParameterFactory` | interfaccia per le due strade | solo `VectorParameter` nativo | il fallback non è servito |
+| Retry | fino a 3 tentativi con attese 1, 3, 9 s | 1 tentativo + 3 ripetizioni con attese 1, 3, 9 s | le tre attese indicate |
+| Controllo 9 di `health` | `EmbeddingInfo` coerente con la configurazione | in più, avviso se restano righe senza embedding ("eseguire embed --solo-mancanti") | le righe aggiunte o modificate dopo l'ultimo `embed` (es. clausole cambiate con `003_seed_clausole.sql`) |
+| Ollama `keep_alive` | lungo | `30m` su ogni richiesta di embedding | — |
+| Test `EmbeddingRepositoryTests.UpdateVector_RoundTrip` | classe dedicata | in `EmbeddingPipelineTests`, con distanza coseno ed euclidea 0 | stesso DB e stessa preparazione dei test della pipeline |
+
 ## 7. Commit proposto (non eseguito)
 
 ```
 fase 4: calcolo e salvataggio degli embedding di clausole e sinistri
+
+EmbeddingService (Ai) con profili per modello (prefissi query/documento di
+EmbeddingGemma), batch, retry sugli errori transitori, riduzione MRL e
+controllo di dimensione. EmbeddingTextBuilder (Core) per il testo di
+clausole, sinistri e denunce. EmbeddingRepository (Data) con parametro
+VECTOR nativo (SqlVector<float>) ed EmbeddingInfo. EmbeddingPipeline
+(Ingestion) e comando embed [--solo-mancanti] [--solo clausole|sinistri].
+health: avviso sulle righe senza embedding.
+
+Verifica: build della solution, 95 test verdi, embed di 470 vettori in 24 s
+con embeddinggemma su CPU, --solo-mancanti a vuoto, health OK.
 ```

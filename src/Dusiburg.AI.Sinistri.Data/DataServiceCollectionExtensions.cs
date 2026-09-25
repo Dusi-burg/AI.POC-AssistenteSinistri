@@ -1,4 +1,5 @@
 using Dusiburg.AI.Sinistri.Core.Health;
+using Dusiburg.AI.Sinistri.Data.Embedding;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -11,6 +12,7 @@ public static class DataServiceCollectionExtensions
     {
         services.AddSingleton(new SqlConnectionFactory(configuration.GetConnectionString(SqlConnectionFactory.ConnectionStringName)));
         services.AddSingleton<IHealthProbe, SqlHealthProbe>();
+        services.AddSingleton<EmbeddingRepository>();
 
         return services;
     }

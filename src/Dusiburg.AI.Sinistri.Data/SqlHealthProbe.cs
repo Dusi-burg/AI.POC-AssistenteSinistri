@@ -126,16 +126,27 @@ public sealed class SqlHealthProbe(SqlConnectionFactory connectionFactory, Sinis
 
         if (info is null)
         {
-            return (ProbeStatus.Ok, $"{colonne}; embedding non ancora calcolati (comando embed, Fase 4)");
+            return (ProbeStatus.Ok, $"{colonne}; embedding non ancora calcolati: eseguire embed");
         }
 
         EmbeddingProvider provider = EnumMetadata.FromConfiguration(options.EmbeddingProvider);
 
-        return info.Modello == options.EmbeddingModel && info.Provider == provider && info.Dimensioni == options.EmbeddingDimensions
-            ? (ProbeStatus.Ok, $"{colonne}; embedding di {info.Modello} ({info.Provider}) del {info.AggiornatoIl:yyyy-MM-dd HH:mm}")
-            : (ProbeStatus.Error,
+        if (info.Modello != options.EmbeddingModel || info.Provider != provider || info.Dimensioni != options.EmbeddingDimensions)
+        {
+            return (ProbeStatus.Error,
                 $"embedding calcolati con {info.Modello} ({info.Provider}, {info.Dimensioni}) ma la configurazione usa " +
                 $"{options.EmbeddingModel} ({provider}, {options.EmbeddingDimensions}): rieseguire embed");
+        }
+
+        // Conteggio su due tabelle da poche centinaia di righe: scansione accettabile, nessun indice su Embedding.
+        int mancanti = await connection.ExecuteScalarAsync<int>(new CommandDefinition(
+            "SELECT (SELECT COUNT(*) FROM dbo.Clausola WHERE Embedding IS NULL) + (SELECT COUNT(*) FROM dbo.Sinistro WHERE Embedding IS NULL)",
+            cancellationToken: cancellationToken));
+        string dettaglio = $"{colonne}; embedding di {info.Modello} ({info.Provider}) del {info.AggiornatoIl:yyyy-MM-dd HH:mm}";
+
+        return mancanti == 0
+            ? (ProbeStatus.Ok, dettaglio)
+            : (ProbeStatus.Warning, $"{dettaglio}; {mancanti} righe senza embedding: eseguire embed --solo-mancanti");
     }
 
     private static IEnumerable<ProbeResult> SkipAfterConnection(string motivo) =>
