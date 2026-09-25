@@ -1,4 +1,5 @@
 using Dusiburg.AI.Sinistri.Ai.Ollama;
+using Dusiburg.AI.Sinistri.Core.Embedding;
 using Dusiburg.AI.Sinistri.Core.Health;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
@@ -15,6 +16,7 @@ public static class AiServiceCollectionExtensions
         services.AddSingleton<EmbeddingGeneratorFactory>();
         services.AddSingleton(provider => provider.GetRequiredService<ChatClientFactory>().Create());
         services.AddSingleton(provider => provider.GetRequiredService<EmbeddingGeneratorFactory>().Create());
+        services.AddSingleton<IEmbeddingService, EmbeddingService>();
         services.AddSingleton<IHealthProbe, OllamaHealthProbe>();
 
         return services;
