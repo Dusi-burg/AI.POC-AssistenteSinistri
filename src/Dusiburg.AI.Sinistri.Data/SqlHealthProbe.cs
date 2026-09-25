@@ -1,16 +1,23 @@
 using Dapper;
+using Dusiburg.AI.Sinistri.Core.Dominio;
 using Dusiburg.AI.Sinistri.Core.Health;
+using Dusiburg.AI.Sinistri.Core.Options;
+using Dusiburg.AI.Sinistri.Data.Schema;
 using Microsoft.Data.SqlClient;
 
 namespace Dusiburg.AI.Sinistri.Data;
 
-/// <summary>Controlli 1–4 di <c>health</c>: connessione, versione ≥ 17 (SQL Server 2025), tipo <c>VECTOR</c>, database applicativo.</summary>
-public sealed class SqlHealthProbe(SqlConnectionFactory connectionFactory) : IHealthProbe
+/// <summary>
+/// Controlli 1–4 e 9 di <c>health</c>: connessione, versione ≥ 17 (SQL Server 2025), tipo <c>VECTOR</c>, database applicativo,
+/// dimensione delle colonne <c>VECTOR</c> e modello degli embedding salvati rispetto alla configurazione.
+/// </summary>
+public sealed class SqlHealthProbe(SqlConnectionFactory connectionFactory, SinistriOptions options) : IHealthProbe
 {
     private const string ConnessioneNome = "Connessione SQL";
     private const string VersioneNome = "Versione SQL Server";
     private const string VectorNome = "Supporto VECTOR";
     private const string DatabaseNome = "Database applicativo";
+    private const string SchemaNome = "Schema ed embedding nel DB";
 
     private const int MinimumMajorVersion = 17;
 
@@ -37,12 +44,17 @@ public sealed class SqlHealthProbe(SqlConnectionFactory connectionFactory) : IHe
             return [connessione, .. SkipAfterConnection("connessione non riuscita")];
         }
 
+        ProbeResult database = await ProbeResult.MeasureAsync(4, DatabaseNome, () => CheckDatabaseAsync(connection, cancellationToken));
+
         return
         [
             connessione,
             await ProbeResult.MeasureAsync(2, VersioneNome, () => CheckVersionAsync(connection, cancellationToken)),
             await ProbeResult.MeasureAsync(3, VectorNome, () => CheckVectorAsync(connection, cancellationToken)),
-            await ProbeResult.MeasureAsync(4, DatabaseNome, () => CheckDatabaseAsync(connection, cancellationToken))
+            database,
+            database.Stato == ProbeStatus.Ok
+                ? await ProbeResult.MeasureAsync(9, SchemaNome, () => CheckSchemaAsync(cancellationToken))
+                : new ProbeResult(9, SchemaNome, database.Stato, "non eseguito: database non disponibile", TimeSpan.Zero)
         ];
     }
 
@@ -85,15 +97,53 @@ public sealed class SqlHealthProbe(SqlConnectionFactory connectionFactory) : IHe
             "SELECT DB_ID(@database)", new { database }, cancellationToken: cancellationToken));
 
         return databaseId is null
-            ? (ProbeStatus.Warning, $"il database '{database}' non esiste ancora: lo crea tools/Dusiburg.AI.Sinistri.DbInit (Fase 2)")
+            ? (ProbeStatus.Warning, $"il database '{database}' non esiste ancora: crearlo con dotnet run --project tools/Dusiburg.AI.Sinistri.DbInit")
             : (ProbeStatus.Ok, $"'{database}' presente");
+    }
+
+    /// <summary>
+    /// Colonne <c>VECTOR</c> della stessa dimensione di <c>EMBEDDING_DIMENSIONS</c>. Se gli embedding sono già stati calcolati
+    /// (<c>EmbeddingInfo</c>), stesso modello e stesso runtime della configurazione: altrimenti la ricerca confronterebbe vettori incompatibili.
+    /// </summary>
+    private async Task<(ProbeStatus, string)> CheckSchemaAsync(CancellationToken cancellationToken)
+    {
+        await using SqlConnection connection = connectionFactory.CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+
+        IReadOnlyDictionary<string, int> columns = await DatabaseInitializer.ReadVectorDimensionsAsync(connection, cancellationToken);
+        string[] wrong = [.. columns.Where(c => c.Value != options.EmbeddingDimensions).Select(c => $"{c.Key} VECTOR({c.Value})")];
+
+        if (columns.Count == 0 || wrong.Length > 0)
+        {
+            string found = columns.Count == 0 ? "nessuna colonna VECTOR" : string.Join(", ", wrong);
+
+            return (ProbeStatus.Error,
+                $"il database ha {found} ma {SinistriOptions.Keys.EmbeddingDimensions}={options.EmbeddingDimensions}: rieseguire DbInit");
+        }
+
+        EmbeddingInfo? info = await DatabaseInitializer.ReadEmbeddingInfoAsync(connection, cancellationToken);
+        string colonne = $"{columns.Count} colonne VECTOR({options.EmbeddingDimensions})";
+
+        if (info is null)
+        {
+            return (ProbeStatus.Ok, $"{colonne}; embedding non ancora calcolati (comando embed, Fase 4)");
+        }
+
+        EmbeddingProvider provider = EnumMetadata.FromConfiguration(options.EmbeddingProvider);
+
+        return info.Modello == options.EmbeddingModel && info.Provider == provider && info.Dimensioni == options.EmbeddingDimensions
+            ? (ProbeStatus.Ok, $"{colonne}; embedding di {info.Modello} ({info.Provider}) del {info.AggiornatoIl:yyyy-MM-dd HH:mm}")
+            : (ProbeStatus.Error,
+                $"embedding calcolati con {info.Modello} ({info.Provider}, {info.Dimensioni}) ma la configurazione usa " +
+                $"{options.EmbeddingModel} ({provider}, {options.EmbeddingDimensions}): rieseguire embed");
     }
 
     private static IEnumerable<ProbeResult> SkipAfterConnection(string motivo) =>
     [
         ProbeResult.Skipped(2, VersioneNome, motivo),
         ProbeResult.Skipped(3, VectorNome, motivo),
-        ProbeResult.Skipped(4, DatabaseNome, motivo)
+        ProbeResult.Skipped(4, DatabaseNome, motivo),
+        ProbeResult.Skipped(9, SchemaNome, motivo)
     ];
 
     private static InvalidOperationException MissingConnectionString() =>
