@@ -88,7 +88,7 @@ public class DatabaseInitializerTests
         await using (SqlConnection connection = await TestDatabase.OpenAsync())
         {
             await connection.ExecuteAsync(
-                "INSERT INTO dbo.EmbeddingInfo (Id, Modello, EmbeddingProviderId, Dimensioni, AggiornatoIl) VALUES (1, N'bge-m3', 1, 4, SYSDATETIME())");
+                "INSERT INTO dbo.EmbeddingInfo (Id, Modello, EmbeddingProviderId, Dimensioni, AggiornatoIl) VALUES (1, 'bge-m3', 1, 4, SYSDATETIME())");
         }
 
         SqlHealthProbe probe = Probe(new() { ["EMBEDDING_DIMENSIONS"] = "4", ["EMBEDDING_MODEL"] = "embeddinggemma" });

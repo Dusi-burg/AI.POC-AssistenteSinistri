@@ -70,7 +70,13 @@ public static class DatabaseInitializer
                     WHEN NOT MATCHED THEN INSERT (Id, Name, Descrizione) VALUES (source.Id, source.Name, source.Descrizione);
                     """;
 
-                var row = new { Id = Convert.ToByte(value, System.Globalization.CultureInfo.InvariantCulture), Name = value.ToString(), Descrizione = Description(value) };
+                // Colonne VARCHAR: parametri ANSI della stessa lunghezza (Dapper di default manda NVARCHAR(4000)).
+                var row = new
+                {
+                    Id = Convert.ToByte(value, System.Globalization.CultureInfo.InvariantCulture),
+                    Name = new DbString { Value = value.ToString(), IsAnsi = true, Length = 50 },
+                    Descrizione = new DbString { Value = Description(value), IsAnsi = true, Length = 100 }
+                };
                 await connection.ExecuteAsync(new CommandDefinition(sql, row, cancellationToken: cancellationToken));
             }
         }
