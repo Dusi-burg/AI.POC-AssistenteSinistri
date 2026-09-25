@@ -36,7 +36,7 @@ Verifiche preliminari:
 
 Passi:
 1. Reverse proxy TLS `https://ollama.localhost:11443` → `http://localhost:11434` con certificato emesso da Dusiburg Root CA.
-2. `CREATE EXTERNAL MODEL OllamaEmbedding WITH (LOCATION = 'https://…/api/embed', API_FORMAT = 'Ollama', MODEL_TYPE = EMBEDDINGS, MODEL = 'bge-m3');` (sintassi da verificare).
+2. `CREATE EXTERNAL MODEL OllamaEmbedding WITH (LOCATION = 'https://…/api/embed', API_FORMAT = 'Ollama', MODEL_TYPE = EMBEDDINGS, MODEL = 'embeddinggemma');` (sintassi da verificare).
 3. Script `db/900_embed_sql.sql`: `UPDATE dbo.Clausola SET Embedding = AI_GENERATE_EMBEDDINGS(<testo> USE MODEL OllamaEmbedding)`, con lo stesso formato di testo di `EmbeddingTextBuilder` riscritto in T-SQL.
 4. Confronto: distanza coseno tra vettore C# e vettore SQL per ogni riga (atteso ~0), tempi totali.
 

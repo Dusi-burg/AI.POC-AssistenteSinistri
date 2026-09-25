@@ -34,7 +34,7 @@ public sealed record CoppiaSospetta(               // fraud-scan: sinistro ↔ s
 
 ## 2. Controllo sulla nuova denuncia (`AntifrodeService.ControllaDenunciaAsync`)
 
-Chiamato come passo 6 di `PreIstruttoriaService` (Fase 6). La denuncia si vettorializza **come documento** (`EmbedDocumentsAsync`), non come query: per i modelli instruction-aware (Fase 1b) il confronto tra denuncia e sinistri indicizzati deve essere simmetrico, altrimenti le distanze non sono comparabili con quelle di `fraud-scan`. Con `bge-m3` (nessun prefisso) i due vettori coincidono e la seconda chiamata si salta.
+Chiamato come passo 6 di `PreIstruttoriaService` (Fase 6). La denuncia si vettorializza **come documento** (`EmbedDocumentsAsync`), non come query: per i modelli instruction-aware (Fase 1b) il confronto tra denuncia e sinistri indicizzati deve essere simmetrico, altrimenti le distanze non sono comparabili con quelle di `fraud-scan`. Con `embeddinggemma` (scelto al CHECKPOINT 1b) query e documento hanno prefissi diversi, quindi servono davvero due chiamate. Nel banco della Fase 1b le coppie sono state misurate con il prefisso `task: sentence similarity`: soglie migliori 0,18 per `embeddinggemma` e 0,26 per `bge-m3`, contro il default 0,08. La taratura del §4 va rifatta sui vettori "documento" salvati nel DB.
 
 ```sql
 SELECT TOP (20)

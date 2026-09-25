@@ -141,7 +141,7 @@ Default proposto: l'opzione 1, subito; la 2 come miglioramento se è semplice.
 
 Sezioni del README:
 1. Cos'è il POC (pilastri A e B, antifrode, scheda) con il diagramma di `fase-8.md`.
-2. Prerequisiti: .NET 10 SDK, SQL Server 2025 (LocalDB `localdev`), Ollama con `qwen3.5:9b` e `bge-m3`; hardware di riferimento (RTX 5060 8 GB + Ryzen AI 7 350) e posizionamento dei modelli (chat su GPU, embedding su CPU).
+2. Prerequisiti: .NET 10 SDK, SQL Server 2025 (LocalDB `localdev`), Ollama con `qwen3.5:9b` e `embeddinggemma`; hardware di riferimento (RTX 5060 8 GB + Ryzen AI 7 350) e posizionamento dei modelli (chat su GPU, embedding su CPU).
 3. Configurazione: user-secrets dell'AppHost (`ConnectionStrings:sql`) e manopole con i default.
 4. Da DB vuoto alla demo: `DbInit` → `Cli embed` → `AppHost` (e `Cli ask …` per la sola console).
 5. Riferimento dei comandi CLI.

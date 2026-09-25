@@ -18,7 +18,7 @@ flowchart LR
     A --> S["Servizi Core<br/>PreIstruttoria · Ricerca · Antifrode · Health"]
     S --> D[("LocalDB localdev<br/>Sinistri")]
     S --> G{{"Ollama · GPU<br/>qwen3.5:9b"}}
-    S --> C{{"Ollama · CPU<br/>bge-m3"}}
+    S --> C{{"Ollama · CPU<br/>embeddinggemma"}}
     H["AppHost Aspire<br/>dashboard, tracce, manopole"] -.-> A
     H -.-> W
 ```

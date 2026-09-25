@@ -168,7 +168,7 @@ Note di progetto:
 ## 3. Template SQL e dimensione del vettore
 
 Gli script usano le **variabili sqlcmd** `$(DatabaseName)` e `$(EmbeddingDimensions)`. Così:
-- da riga di comando si eseguono con `sqlcmd -S "(localdb)\localdev" -E -i db\002_schema.sql -v EmbeddingDimensions=1024 -d Sinistri`;
+- da riga di comando si eseguono con `sqlcmd -S "(localdb)\localdev" -E -i db\002_schema.sql -v EmbeddingDimensions=768 -d Sinistri`;
 - dal codice `SqlScriptRunner` (Data) legge il file, sostituisce `$(Nome)` con i valori di configurazione (solo interi validati e nomi di DB che rispettano la regex `^[A-Za-z0-9_]+$`, per evitare SQL injection), divide sui separatori `GO` e manda i batch in sequenza.
 
 Gli script sono file incorporati nell'assembly `Data` (`EmbeddedResource`), così `DbInit` e i test li trovano senza dipendere dalla cartella di lavoro.
@@ -204,7 +204,7 @@ dotnet run --project tools/Dusiburg.AI.Sinistri.DbInit [-- "<connection string>"
 | 4. Create + schema | `001_create_database.sql`, poi `002_schema.sql` con `EmbeddingDimensions` = `EMBEDDING_DIMENSIONS` (ambiente, altrimenti default delle opzioni) |
 | 5. Lookup | `SyncLookupsAsync` dai 5 enum |
 | 6. Seed (se non c'è `--no-seed`) | clausole (`003_seed_clausole.sql`) e dati sintetici (`fase-3.md`); `--parafrasa-con-llm` attiva la parafrasi via Ollama |
-| 7. Riepilogo | *"Fatto: database Sinistri ricreato con VECTOR(1024), lookup popolate dagli enum, 60 clausole, 410 sinistri. Embedding da calcolare: dotnet run --project src/Dusiburg.AI.Sinistri.Cli -- embed"* |
+| 7. Riepilogo | *"Fatto: database Sinistri ricreato con VECTOR(768), lookup popolate dagli enum, 60 clausole, 410 sinistri. Embedding da calcolare: dotnet run --project src/Dusiburg.AI.Sinistri.Cli -- embed"* |
 
 Il seed **non** calcola gli embedding: servono Ollama e qualche minuto, quindi restano un passo separato della CLI (`fase-4.md`). Così `DbInit` è veloce, deterministico e usabile anche dai test senza Ollama.
 
@@ -214,7 +214,7 @@ La classe che fa il lavoro, `DatabaseInitializer.RecreateAsync(connectionString,
 
 ### Lettura della dimensione delle colonne
 
-`DatabaseInitializer.ReadVectorDimensionsAsync()` legge la dimensione di `Clausola.Embedding` e `Sinistro.Embedding` dai metadati di sistema. In fase di sviluppo va verificata la colonna esatta di `sys.columns` che espone la dimensione (es. `vector_dimensions`); in alternativa `max_length`, meno l'header, diviso 4. Serve al controllo 9 di `health`: se la configurazione chiede 1024 e il DB ha 768 → *"Il database ha VECTOR(768) ma EMBEDDING_DIMENSIONS è 1024: rieseguire DbInit."*
+`DatabaseInitializer.ReadVectorDimensionsAsync()` legge la dimensione di `Clausola.Embedding` e `Sinistro.Embedding` dai metadati di sistema. In fase di sviluppo va verificata la colonna esatta di `sys.columns` che espone la dimensione (es. `vector_dimensions`); in alternativa `max_length`, meno l'header, diviso 4. Serve al controllo 9 di `health`: se la configurazione chiede 768 e il DB ha 1024 → *"Il database ha VECTOR(1024) ma EMBEDDING_DIMENSIONS è 768: rieseguire DbInit."*
 
 Classi coinvolte: `DatabaseInitializer`, `SqlScriptRunner` (Data), `Program.cs` di `DbInit`.
 

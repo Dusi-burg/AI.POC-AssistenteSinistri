@@ -42,7 +42,7 @@ Un record per modello supportato, scelto in base a `EMBEDDING_MODEL`. I prefissi
 |---|---|---|---|
 | `bge-m3` | — | — | 1024 → 1024 |
 | Qwen3-Embedding (0.6B / 4B) | `Instruct: Dato il testo di una denuncia di sinistro, trova le clausole di polizza e i sinistri pertinenti\nQuery: ` (istruzione da tarare nel banco; le istruzioni si possono scrivere anche in inglese) | — | 1024 → 1024 · 2560 → 1024/1536 |
-| EmbeddingGemma-300m | `task: search result \| query: ` | `title: none \| text: ` | 768 → 768 |
+| **`embeddinggemma`** (scelto al CHECKPOINT 1b) | `task: search result \| query: ` | `title: none \| text: ` | 768 → 768 |
 | multilingual-e5-large-instruct | `Instruct: …\nQuery: ` | — | 1024 → 1024 |
 
 Un modello non presente nella tabella produce un errore esplicito all'avvio: non si usa un modello instruction-aware "senza profilo".
@@ -104,7 +104,7 @@ Lo sviluppo parte dall'opzione nativa con un test di integrazione; se fallisce s
    ```
    Clausole: 60 vettori in 00:00:07
    Sinistri: 410 vettori in 00:00:41
-   Totale:   470 vettori in 00:00:48 (modello bge-m3, 1024 dim)
+   Totale:   470 vettori in 00:00:12 (modello embeddinggemma, 768 dim)
    Righe con Embedding NULL: 0
    ```
 

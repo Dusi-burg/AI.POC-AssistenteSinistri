@@ -215,6 +215,11 @@ Ryzen AI Software 1.8 **non** è servito: l'EP della NPU arriva con Windows ML.
 
 Con A, il percorso NPU resta un'estensione possibile della Fase 10. Passare poi a `bge-m3` su NPU vorrebbe dire rifare gli embedding con `VECTOR(1024)`: con `DbInit` e il comando `embed` sono pochi minuti, e `EmbeddingInfo` (Fase 2) impedisce di mescolare vettori diversi.
 
+**CHECKPOINT 1b — deciso il 2026-09-25: opzione A.**
+- `EMBEDDING_PROVIDER=ollama`, `EMBEDDING_MODEL=embeddinggemma`, `EMBEDDING_DIMENSIONS=768`, su CPU (`EMBEDDING_NUM_GPU=0`): nuovi default di `SinistriOptions`;
+- prefissi EmbeddingGemma (query `task: search result | query: `, documento `title: none | text: `) obbligatori da Fase 4 (`EmbeddingProfile`);
+- percorso NPU (`bge-m3` con Windows ML) rimandato a eventuale estensione della Fase 10; `bge-m3` può essere rimosso da Ollama quando si vuole.
+
 ## 8. Commit proposto (non eseguito)
 
 ```

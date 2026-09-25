@@ -42,14 +42,14 @@ public class ChatClientFactoryTests
     public void EmbeddingFactory_Ollama_MetadatiDalModelloConfigurato()
     {
         //SETUP
-        var factory = new EmbeddingGeneratorFactory(Options(new() { ["EMBEDDING_DIMENSIONS"] = "1024" }), NullLoggerFactory.Instance);
+        var factory = new EmbeddingGeneratorFactory(Options([]), NullLoggerFactory.Instance);
 
         //SUT
         using IEmbeddingGenerator<string, Embedding<float>> generator = factory.Create();
 
         EmbeddingGeneratorMetadata? metadata = generator.GetService<EmbeddingGeneratorMetadata>();
-        Assert.That(metadata?.DefaultModelId, Is.EqualTo("bge-m3"));
-        Assert.That(metadata?.DefaultModelDimensions, Is.EqualTo(1024));
+        Assert.That(metadata?.DefaultModelId, Is.EqualTo("embeddinggemma"));
+        Assert.That(metadata?.DefaultModelDimensions, Is.EqualTo(768));
     }
 
     [Test]

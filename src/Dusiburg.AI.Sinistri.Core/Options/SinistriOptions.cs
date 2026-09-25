@@ -43,10 +43,13 @@ public sealed record SinistriOptions(
     /// <summary>Con 8 GB di VRAM Ollama sceglierebbe 4096 token, pochi per il prompt della scheda (~3–4k token) più la risposta.</summary>
     public const int DefaultContextLength = 8_192;
 
-    /// <summary>Default provvisorio fino al CHECKPOINT 1b.</summary>
-    public const string DefaultEmbeddingModel = "bge-m3";
+    /// <summary>
+    /// Scelto al CHECKPOINT 1b (opzione A, fase-1b.md §7 bis): sul banco di prova ha la qualità migliore (MRR 0,785 contro
+    /// 0,730 di bge-m3) ed è il più veloce su CPU. Richiede i prefissi di query e documento (Fase 4).
+    /// </summary>
+    public const string DefaultEmbeddingModel = "embeddinggemma";
 
-    public const int DefaultEmbeddingDimensions = 1024;
+    public const int DefaultEmbeddingDimensions = 768;
 
     /// <summary>D18: l'embedding non va mai in VRAM, per non contendere la GPU alla chat.</summary>
     public const int DefaultEmbeddingNumGpu = 0;

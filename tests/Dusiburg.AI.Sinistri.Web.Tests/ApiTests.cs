@@ -47,7 +47,7 @@ public class ApiTests
     {
         //SETUP
         await using WebApplicationFactory<ApiEntryPoint> factory = Factory(
-            new ProbeResult(8, "Dimensione embedding", ProbeStatus.Error, "1024 ma EMBEDDING_DIMENSIONS=768", TimeSpan.Zero));
+            new ProbeResult(8, "Dimensione embedding", ProbeStatus.Error, "768 ma EMBEDDING_DIMENSIONS=1024", TimeSpan.Zero));
         using HttpClient client = factory.CreateClient();
 
         //SUT

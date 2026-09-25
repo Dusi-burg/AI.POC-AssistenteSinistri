@@ -21,7 +21,7 @@ public class WebTests
         var report = new ProbeReport(
         [
             new ProbeResult(1, "Connessione SQL", ProbeStatus.Ok, "(localdb)\\localdev", TimeSpan.FromMilliseconds(12)),
-            new ProbeResult(8, "Dimensione embedding", ProbeStatus.Error, "1024 ma EMBEDDING_DIMENSIONS=768", TimeSpan.Zero)
+            new ProbeResult(8, "Dimensione embedding", ProbeStatus.Error, "768 ma EMBEDDING_DIMENSIONS=1024", TimeSpan.Zero)
         ]);
         await using WebApplicationFactory<WebEntryPoint> factory = Factory(new StubApiHandler(JsonSerializer.Serialize(report, JsonSerializerOptions.Web)));
         using HttpClient client = factory.CreateClient();
@@ -30,7 +30,7 @@ public class WebTests
         string page = await client.GetStringAsync("/", CancellationToken);
 
         Assert.That(page, Does.Contain("Connessione SQL").And.Contain("badge bg-success"));
-        Assert.That(page, Does.Contain("Dimensione embedding").And.Contain("badge bg-danger").And.Contain("EMBEDDING_DIMENSIONS=768"));
+        Assert.That(page, Does.Contain("Dimensione embedding").And.Contain("badge bg-danger").And.Contain("EMBEDDING_DIMENSIONS=1024"));
     }
 
     [Test]
