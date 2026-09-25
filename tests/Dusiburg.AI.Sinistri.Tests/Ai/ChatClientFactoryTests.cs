@@ -53,15 +53,37 @@ public class ChatClientFactoryTests
     }
 
     [Test]
-    public void EmbeddingFactory_ProviderNonAncoraImplementato_ErroreEsplicito()
+    public void EmbeddingFactory_OpenAiCompatible_MetadatiDalServerConfigurato()
     {
         //SETUP
         var factory = new EmbeddingGeneratorFactory(
-            Options(new() { ["EMBEDDING_PROVIDER"] = "openai-compatible", ["EMBEDDING_ENDPOINT"] = "http://127.0.0.1:52625/v1" }),
+            Options(new()
+            {
+                ["EMBEDDING_PROVIDER"] = "openai-compatible",
+                ["EMBEDDING_ENDPOINT"] = "http://127.0.0.1:52625/v1",
+                ["EMBEDDING_MODEL"] = "embed-gemma:300m",
+                ["EMBEDDING_DIMENSIONS"] = "768"
+            }),
             NullLoggerFactory.Instance);
 
         //SUT
-        Assert.That(() => factory.Create(), Throws.TypeOf<NotSupportedException>().With.Message.Contains("Fase 1b"));
+        using IEmbeddingGenerator<string, Embedding<float>> generator = factory.Create();
+
+        EmbeddingGeneratorMetadata? metadata = generator.GetService<EmbeddingGeneratorMetadata>();
+        Assert.That(metadata?.ProviderUri, Is.EqualTo(new Uri("http://127.0.0.1:52625/v1/")), "barra finale: le richieste vanno a /v1/embeddings");
+        Assert.That(metadata?.DefaultModelId, Is.EqualTo("embed-gemma:300m"));
+    }
+
+    [Test]
+    public void EmbeddingFactory_ProviderNonDisponibileNellApplicazione_ErroreEsplicito()
+    {
+        //SETUP
+        var factory = new EmbeddingGeneratorFactory(
+            Options(new() { ["EMBEDDING_PROVIDER"] = "onnx", ["EMBEDDING_ONNX_PATH"] = "C:\\modelli\\bge-m3" }),
+            NullLoggerFactory.Instance);
+
+        //SUT
+        Assert.That(() => factory.Create(), Throws.TypeOf<NotSupportedException>().With.Message.Contains("CHECKPOINT 1b"));
     }
 
     [TestCase("bge-m3:latest", "bge-m3", true)]

@@ -153,8 +153,80 @@ La scelta definitiva è confermata in Fase 9 sul golden set completo, con il con
 
 Stima: ½ giornata per P1 + P2 e il banco; fino a 1 giornata aggiuntiva per P2b, P3a e P3b.
 
+## 7 bis. Esito (2026-09-25)
+
+Report completo: [`eval/embedding-bench_2026-09-25.md`](../eval/embedding-bench_2026-09-25.md). Banco ripetibile con
+`dotnet run --project tools/Dusiburg.AI.Sinistri.EmbeddingBench` (opzioni `--candidates`, `--repeat`, `--skip-coexistence`, `--report`).
+
+### Installato sul PC
+
+| Cosa | Dove | Note |
+|---|---|---|
+| FastFlowLM 1.0.6 (`flm-setup.msi`, non firmato) | `C:\Program Files\flm`, modelli in `%USERPROFILE%\.flm` | `embed-gemma:300m` + compagno `qwen3:0.6b` (Gemma3-270M non è più nel catalogo); server con `flm serve qwen3:0.6b --embed 1`, porta 52625 |
+| EP di Windows ML dal catalogo | pacchetti `Microsoft.WinML.*` in `C:\Program Files\WindowsApps` | `EnsureAndRegisterCertifiedAsync` ha scaricato **tutti** gli EP compatibili: VitisAI e RyzenAI Light (NPU AMD 1.8.75), MIGraphX/AMD GPU, NVIDIA TensorRT-RTX. Il codice del banco ora registra solo VitisAI |
+| Copia locale dell'EP VitisAI | `%LOCALAPPDATA%\Dusiburg.AI.Sinistri\vitisai-ep` (703 MB) | vedi "P3a" sotto |
+| `amd/bge-m3-onnx` + tokenizer BAAI | `%LOCALAPPDATA%\Dusiburg.AI.Sinistri\models\bge-m3-onnx` (2,2 GB) | |
+| `amd/embeddinggemma-300m_npu_rai_1.8.0_npu_4K` | `…\models\embeddinggemma-300m-npu` (260 MB) | non utilizzabile (P2b) |
+| Ollama `embeddinggemma` (621 MB) | Ollama | autorizzato il 2026-09-25 come riferimento CPU di P2 |
+| Cache del compilatore VitisAI | `C:\Temp\dusim\vaip\.cache` (~1 GB) | scelta dall'EP; senza cache la prima sessione NPU di `bge-m3` compila per ~6,5 minuti, con la cache si apre in ~1 s |
+
+Ryzen AI Software 1.8 **non** è servito: l'EP della NPU arriva con Windows ML.
+
+### Risultati (25 casi, 32 clausole)
+
+| Candidato | Chip | MRR | hit@1 | recall@3 | Margine medio | Latenza p50 | Stima 470 testi | Correttezza vs CPU | Esito regola §5 |
+|---|---|---|---|---|---|---|---|---|---|
+| `embeddinggemma` (Ollama) | CPU | **0,785** | 0,64 | **0,96** | **0,084** | **17 ms** | **11 s** | — | ammesso, **migliore** |
+| `amd/bge-m3-onnx` (Windows ML + VitisAI) | **NPU** | 0,750 | 0,64 | 0,78 | 0,068 | 81 ms | 39 s | 0,9992 | ammesso |
+| `bge-m3` (Ollama) | CPU | 0,730 | 0,60 | 0,78 | 0,069 | 40 ms | 26 s | — | ammesso |
+| `bge-m3` (Ollama) | GPU | 0,730 | 0,60 | 0,78 | 0,069 | 16 ms | 7 s | — | escluso (D18): **dimezza la chat**, 37,6 → 19,0 token/s |
+| `embed-gemma:300m` (FastFlowLM) | NPU | 0,138 | 0,04 | 0,08 | −0,007 | 240 ms | 124 s | **−0,04** | escluso: vettori errati |
+| `amd/bge-m3-onnx` (Windows ML) | CPU | 0,730 | 0,60 | 0,78 | 0,069 | 1036 ms | 450 s | 1,0000 | escluso: troppo lento (input fisso a 512 token) |
+
+- **Convivenza:** nessun percorso CPU o NPU rallenta la chat in modo apprezzabile (33,8–37,2 token/s contro 37,6) e nessuno la fa ricaricare.
+- **Antifrode:** tutti i percorsi validi separano perfettamente riformulate e "stesso tema" (accuratezza 1,00). Il margine è di 0,078 con `bge-m3` e di 0,060 con `embeddinggemma`; soglie migliori rispettivamente 0,26 e 0,18. Il default `SOGLIA_DUPLICATO_COSINE = 0.08` è **troppo basso per entrambi**: va ritarato in Fase 7.
+- **Determinismo:** distanza massima ~1e-16 ovunque.
+
+### Problemi trovati
+
+- **P2, FastFlowLM 1.0.6:** i vettori di `embed-gemma:300m` non hanno relazione con quelli dello stesso modello su CPU (coseno medio −0,04). La MRR di 0,138 è a livello del caso, sia in batch sia con un testo per richiesta. È la regressione temuta al §1: da segnalare al progetto FastFlowLM, e da riprovare con una versione successiva (il banco lo fa in un minuto).
+- **P2b, EmbeddingGemma AMD per Ryzen AI 1.8:** non si apre con l'ONNX Runtime di Windows ML. Usa 224 operatori custom `com.ryzenai`, un `config.json` vuoto e pesi Q4 che l'EP non riconosce (`Unknown tensor data type`, poi crash nativo). Serve il flusso OGA di Ryzen AI Software, più il tokenizer Gemma, che è ad accesso controllato. Tentativo chiuso: lo stesso modello su NPU è già coperto da P2.
+- **P3a, compilatore AIE e WindowsApps:** l'EP VitisAI installato dal catalogo non riesce a compilare i modelli float. Il compilatore riceve il percorso delle proprie risorse in forma breve 8.3, troncato a `C:\PROGRA~1\WindowsApps\` (`Failed to load VFS`). L'aggiramento è una **copia locale dello stesso EP**, registrata con `OrtEnv.RegisterExecutionProviderLibrary` (modalità "bring your own EP", uso di sviluppo e test). Con la copia la compilazione riesce:
+  - conversione in BF16 automatica;
+  - 98,6% degli operatori e il 99,999% dei GOPs sulla NPU;
+  - coseno 0,9992 rispetto a Ollama.
+- **Chat (non legato all'embedding):** con `OLLAMA_NUM_CTX = 8192` (default della Fase 1) `qwen3.5:9b` occupa 5,85 GB e Ollama ne tiene in VRAM solo 5,13 GB (88% GPU). Con 4096 è al 100%. Oggi la velocità resta ~37 token/s; da valutare in Fase 6 con il prompt reale (contesto 6144, oppure KV cache quantizzata lato server Ollama).
+- **Non misurati per scelta dell'utente:** Qwen3-Embedding 0.6B/4B ed e5 (pull non autorizzati al CHECKPOINT 0), P3b (dipende da Qwen3), P5.
+
+### Codice introdotto
+
+- `Ai`: provider `openai-compatible` (`OpenAiCompatibleEmbeddingGenerator`, client HTTP minimo con `encoding_format: float`); controllo 7 di `health` per quel provider (FastFlowLM non elenca il modello di embedding in `/v1/models`: la prova reale è il controllo 8).
+- `tools/Dusiburg.AI.Sinistri.EmbeddingBench` (`net10.0-windows10.0.26100.0`, Windows ML self-contained): dataset, candidati, misure, convivenza, report con la regola del §5, generatore ONNX di `bge-m3` (tokenizer XLM-R con numerazione fairseq, verificato a 0,99999 contro Ollama).
+- `data/embedding_bench.json`: 32 bozze di clausole, 25 denunce con rilevanti e distrattori, 10 + 10 coppie per l'antifrode.
+
+### Decisione richiesta (CHECKPOINT 1b)
+
+| Opzione | Provider / modello / dimensioni | Pro | Contro |
+|---|---|---|---|
+| **A (consigliata)** | `ollama` / `embeddinggemma` / **768** su CPU | qualità migliore (MRR +0,035, recall@3 0,96 contro 0,78), la più veloce, nessun componente nuovo | prefissi obbligatori (`EmbeddingProfile` in Fase 4); licenza Gemma; niente NPU nella demo |
+| B | `onnx` / `amd/bge-m3-onnx` / **1024** su NPU | NPU nella demo ("tre chip, tre compiti"), CPU libera, vettori corretti | qualità inferiore ad A; `Ai` deve passare a un TFM Windows; copia locale dell'EP, prima compilazione di 6,5 minuti, +1 GB di RAM nel processo dell'API |
+| C | `ollama` / `bge-m3` / 1024 su CPU | default attuale, nessun prefisso | peggiore di A in tutto; nessun vantaggio rispetto a B oltre alla semplicità |
+| D | prima di scegliere, `ollama pull qwen3-embedding:0.6b` (~640 MB) e rilancio del banco | chiude il confronto previsto dal piano | download aggiuntivo, da autorizzare |
+
+Con A, il percorso NPU resta un'estensione possibile della Fase 10. Passare poi a `bge-m3` su NPU vorrebbe dire rifare gli embedding con `VECTOR(1024)`: con `DbInit` e il comando `embed` sono pochi minuti, e `EmbeddingInfo` (Fase 2) impedisce di mescolare vettori diversi.
+
 ## 8. Commit proposto (non eseguito)
 
 ```
 fase 1b: banco di prova degli embedding su CPU e NPU e scelta del modello
+
+Banco tools/Dusiburg.AI.Sinistri.EmbeddingBench con dataset data/embedding_bench.json:
+qualita' di retrieval, separazione dei quasi-duplicati, latenza, throughput,
+determinismo, correttezza NPU contro CPU e convivenza con la chat su GPU.
+Provider openai-compatible in Ai per i runtime NPU con server (FastFlowLM).
+bge-m3 su NPU con Windows ML e EP VitisAI (copia locale dell'EP: da WindowsApps
+il compilatore AIE riceve un percorso 8.3 troncato). FastFlowLM 1.0.6 restituisce
+vettori errati; l'EmbeddingGemma AMD per Ryzen AI 1.8 richiede il flusso OGA.
+
+Verifica: report eval/embedding-bench_2026-09-25.md, build della solution, test verdi.
 ```
