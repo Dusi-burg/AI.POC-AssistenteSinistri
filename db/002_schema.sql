@@ -7,40 +7,40 @@
 IF OBJECT_ID(N'dbo.Prodotto', N'U') IS NULL
 CREATE TABLE dbo.Prodotto (
     Id TINYINT NOT NULL CONSTRAINT PK_Prodotto PRIMARY KEY,
-    Name NVARCHAR(50) NOT NULL CONSTRAINT UQ_Prodotto_Name UNIQUE,
-    Descrizione NVARCHAR(100) NOT NULL
+    Name VARCHAR(50) NOT NULL CONSTRAINT UQ_Prodotto_Name UNIQUE,
+    Descrizione VARCHAR(100) NOT NULL
 );
 GO
 
 IF OBJECT_ID(N'dbo.TipoClausola', N'U') IS NULL
 CREATE TABLE dbo.TipoClausola (
     Id TINYINT NOT NULL CONSTRAINT PK_TipoClausola PRIMARY KEY,
-    Name NVARCHAR(50) NOT NULL CONSTRAINT UQ_TipoClausola_Name UNIQUE,
-    Descrizione NVARCHAR(100) NOT NULL
+    Name VARCHAR(50) NOT NULL CONSTRAINT UQ_TipoClausola_Name UNIQUE,
+    Descrizione VARCHAR(100) NOT NULL
 );
 GO
 
 IF OBJECT_ID(N'dbo.CausaSinistro', N'U') IS NULL
 CREATE TABLE dbo.CausaSinistro (
     Id TINYINT NOT NULL CONSTRAINT PK_CausaSinistro PRIMARY KEY,
-    Name NVARCHAR(50) NOT NULL CONSTRAINT UQ_CausaSinistro_Name UNIQUE,
-    Descrizione NVARCHAR(100) NOT NULL
+    Name VARCHAR(50) NOT NULL CONSTRAINT UQ_CausaSinistro_Name UNIQUE,
+    Descrizione VARCHAR(100) NOT NULL
 );
 GO
 
 IF OBJECT_ID(N'dbo.StatoSinistro', N'U') IS NULL
 CREATE TABLE dbo.StatoSinistro (
     Id TINYINT NOT NULL CONSTRAINT PK_StatoSinistro PRIMARY KEY,
-    Name NVARCHAR(50) NOT NULL CONSTRAINT UQ_StatoSinistro_Name UNIQUE,
-    Descrizione NVARCHAR(100) NOT NULL
+    Name VARCHAR(50) NOT NULL CONSTRAINT UQ_StatoSinistro_Name UNIQUE,
+    Descrizione VARCHAR(100) NOT NULL
 );
 GO
 
 IF OBJECT_ID(N'dbo.EmbeddingProvider', N'U') IS NULL
 CREATE TABLE dbo.EmbeddingProvider (
     Id TINYINT NOT NULL CONSTRAINT PK_EmbeddingProvider PRIMARY KEY,
-    Name NVARCHAR(50) NOT NULL CONSTRAINT UQ_EmbeddingProvider_Name UNIQUE,
-    Descrizione NVARCHAR(100) NOT NULL
+    Name VARCHAR(50) NOT NULL CONSTRAINT UQ_EmbeddingProvider_Name UNIQUE,
+    Descrizione VARCHAR(100) NOT NULL
 );
 GO
 
@@ -55,7 +55,7 @@ GO
 IF OBJECT_ID(N'dbo.Polizza', N'U') IS NULL
 CREATE TABLE dbo.Polizza (
     Id INT IDENTITY CONSTRAINT PK_Polizza PRIMARY KEY,
-    Numero NVARCHAR(30) NOT NULL CONSTRAINT UQ_Polizza_Numero UNIQUE,
+    Numero VARCHAR(30) NOT NULL CONSTRAINT UQ_Polizza_Numero UNIQUE,
     ProdottoId TINYINT NOT NULL CONSTRAINT FK_Polizza_Prodotto REFERENCES dbo.Prodotto (Id),
     ContraenteId INT NOT NULL CONSTRAINT FK_Polizza_Contraente REFERENCES dbo.Contraente (Id),
     Decorrenza DATE NOT NULL,
@@ -89,7 +89,7 @@ GO
 IF OBJECT_ID(N'dbo.Sinistro', N'U') IS NULL
 CREATE TABLE dbo.Sinistro (
     Id INT IDENTITY CONSTRAINT PK_Sinistro PRIMARY KEY,
-    Numero NVARCHAR(20) NOT NULL CONSTRAINT UQ_Sinistro_Numero UNIQUE,
+    Numero VARCHAR(30) NOT NULL CONSTRAINT UQ_Sinistro_Numero UNIQUE,
     PolizzaId INT NOT NULL CONSTRAINT FK_Sinistro_Polizza REFERENCES dbo.Polizza (Id),
     RiparatoreId INT NULL CONSTRAINT FK_Sinistro_Riparatore REFERENCES dbo.Riparatore (Id),
     DataEvento DATE NOT NULL,
@@ -122,7 +122,7 @@ GO
 IF OBJECT_ID(N'dbo.EmbeddingInfo', N'U') IS NULL
 CREATE TABLE dbo.EmbeddingInfo (
     Id TINYINT NOT NULL CONSTRAINT PK_EmbeddingInfo PRIMARY KEY CONSTRAINT CK_EmbeddingInfo_Singleton CHECK (Id = 1),
-    Modello NVARCHAR(100) NOT NULL,
+    Modello VARCHAR(100) NOT NULL,
     EmbeddingProviderId TINYINT NOT NULL CONSTRAINT FK_EmbeddingInfo_EmbeddingProvider REFERENCES dbo.EmbeddingProvider (Id),
     Dimensioni INT NOT NULL,
     AggiornatoIl DATETIME2(0) NOT NULL

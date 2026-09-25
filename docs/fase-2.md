@@ -84,8 +84,8 @@ Tutte le istruzioni sono protette (`IF OBJECT_ID(...) IS NULL`, `IF NOT EXISTS (
 -- Lookup (righe inserite dalla CLI a partire dagli enum, vedi §4)
 CREATE TABLE dbo.Prodotto (
   Id TINYINT NOT NULL CONSTRAINT PK_Prodotto PRIMARY KEY,
-  Name NVARCHAR(50) NOT NULL CONSTRAINT UQ_Prodotto_Name UNIQUE,
-  Descrizione NVARCHAR(100) NOT NULL
+  Name VARCHAR(50) NOT NULL CONSTRAINT UQ_Prodotto_Name UNIQUE,
+  Descrizione VARCHAR(100) NOT NULL
 );
 CREATE TABLE dbo.TipoClausola (   /* stessa forma */ );
 CREATE TABLE dbo.CausaSinistro (  /* stessa forma */ );
@@ -100,7 +100,7 @@ CREATE TABLE dbo.Contraente (
 
 CREATE TABLE dbo.Polizza (
   Id INT IDENTITY CONSTRAINT PK_Polizza PRIMARY KEY,
-  Numero NVARCHAR(30) NOT NULL CONSTRAINT UQ_Polizza_Numero UNIQUE,
+  Numero VARCHAR(30) NOT NULL CONSTRAINT UQ_Polizza_Numero UNIQUE,
   ProdottoId TINYINT NOT NULL CONSTRAINT FK_Polizza_Prodotto REFERENCES dbo.Prodotto(Id),
   ContraenteId INT NOT NULL CONSTRAINT FK_Polizza_Contraente REFERENCES dbo.Contraente(Id),
   Decorrenza DATE NOT NULL,
@@ -128,7 +128,7 @@ CREATE TABLE dbo.Riparatore (
 
 CREATE TABLE dbo.Sinistro (
   Id INT IDENTITY CONSTRAINT PK_Sinistro PRIMARY KEY,
-  Numero NVARCHAR(20) NOT NULL CONSTRAINT UQ_Sinistro_Numero UNIQUE,   -- 'SIN-2025-000123'
+  Numero VARCHAR(30) NOT NULL CONSTRAINT UQ_Sinistro_Numero UNIQUE,   -- 'SIN-2025-000123'
   PolizzaId INT NOT NULL CONSTRAINT FK_Sinistro_Polizza REFERENCES dbo.Polizza(Id),
   RiparatoreId INT NULL CONSTRAINT FK_Sinistro_Riparatore REFERENCES dbo.Riparatore(Id),
   DataEvento DATE NOT NULL,
@@ -151,7 +151,7 @@ CREATE INDEX IX_Sinistro_PolizzaId ON dbo.Sinistro (PolizzaId);   -- join verso 
 -- Metadati dell'ultimo calcolo degli embedding (scritta in Fase 4, letta da health)
 CREATE TABLE dbo.EmbeddingInfo (
   Id TINYINT NOT NULL CONSTRAINT PK_EmbeddingInfo PRIMARY KEY CONSTRAINT CK_EmbeddingInfo_Singleton CHECK (Id = 1),
-  Modello NVARCHAR(100) NOT NULL,
+  Modello VARCHAR(100) NOT NULL,
   EmbeddingProviderId TINYINT NOT NULL CONSTRAINT FK_EmbeddingInfo_EmbeddingProvider REFERENCES dbo.EmbeddingProvider(Id),
   Dimensioni INT NOT NULL,
   AggiornatoIl DATETIME2(0) NOT NULL
@@ -162,6 +162,7 @@ Note di progetto:
 - **Indici:** con ~400 sinistri e ~60 clausole la ricerca vettoriale esatta è una scansione completa ed è istantanea. `IX_Sinistro_Filtri` serve per i filtri SQL della ricerca ibrida (stato + data); `IX_Sinistro_PolizzaId` per la join. Non si aggiunge un indice vettoriale (DiskANN è la Fase 10).
 - **`EmbeddingInfo`** (aggiunta rispetto al piano): registra con quale modello e quale runtime sono stati calcolati i vettori. Senza questa informazione, cambiando modello o runtime (es. lo stesso EmbeddingGemma su CPU con Ollama e su NPU con FastFlowLM) a parità di dimensione, si confronterebbero vettori di modelli diversi senza accorgersene. `health` la confronta con la configurazione.
 - `Sinistro.Provincia` resta `CHAR(2)` (sigla libera, non un enum di codice).
+- **`VARCHAR` vs `NVARCHAR`:** codici e nomi tecnici (`Numero` di polizza e sinistro, `Name`/`Descrizione` delle lookup, `EmbeddingInfo.Modello`) sono `VARCHAR`; i testi liberi (nominativi, titoli, descrizioni, perizie) restano `NVARCHAR`. Le query Dapper che filtrano su una colonna `VARCHAR` passano il parametro come `DbString { IsAnsi = true, Length = … }`: con la collation `SQL_Latin1_General_CP1_CI_AS` un parametro `NVARCHAR` forza la conversione della colonna e trasforma la seek sull'indice univoco (es. `UQ_Polizza_Numero`, `UQ_Sinistro_Numero`) in una scansione.
 
 ---
 
