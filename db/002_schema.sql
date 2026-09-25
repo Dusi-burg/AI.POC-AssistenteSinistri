@@ -1,6 +1,6 @@
 -- Schema del POC (fase-2.md §2): tabelle al singolare (D2), enum come lookup (D3), chiave di business Sinistro.Numero (D4).
 -- Variabili sqlcmd: $(EmbeddingDimensions) = EMBEDDING_DIMENSIONS, mai scritta a mano.
--- Esecuzione manuale: sqlcmd -S "(localdb)\localdev" -E -d Sinistri -i db\002_schema.sql -v EmbeddingDimensions=768
+-- Esecuzione manuale: sqlcmd -S "(localdb)\localdev" -E -d Sinistri -f 65001 -i db\002_schema.sql -v EmbeddingDimensions=768
 -- Istruzioni protette: lo script si può rieseguire. Le righe delle lookup le inserisce DbInit a partire dagli enum.
 
 -- Lookup: Id = valore esplicito dell'enum, Name = nome del membro, Descrizione = etichetta italiana

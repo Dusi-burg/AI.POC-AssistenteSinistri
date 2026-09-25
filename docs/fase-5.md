@@ -207,8 +207,52 @@ Sui dati reali (dopo `DbInit` + `embed`), controllando a mano i risultati:
 
 Se uno scenario non è soddisfatto si interviene prima sui **testi delle clausole** (Fase 3) e sulla soglia integrativa, non sulle query; le modifiche si riportano nel riepilogo. Build della solution e test verdi.
 
+## 8 bis. Esito (2026-09-25)
+
+Criteri verificati su un DB di verifica (`Sinistri_Verifica`, DbInit + `embed`, poi eliminato):
+
+| Scenario | Risultato | Esito |
+|---|---|---|
+| 1 | 2.4 prima (0,519), 3.4 (esclusione), 2.5, 4.3 aggiunta come integrativa (0,649) | ✅ |
+| 2 | 2.3, 3.6, 2.2, 4.2 tra le prime 5 | ✅ |
+| 3 | 2.1, 1.1, 2.6, 3.5 (esclusione) | ✅ |
+| 4 | 3.7 prima (0,582), 2.6, 4.4 | ✅ |
+| 5 | 8 sinistri, tutti MI, `FenomenoElettrico`, chiusi, 5.020–5.510 €; statistiche: 8 casi, 0 respinti, mediana 5.245 € | ✅ |
+
+Tempi a console: embedding della denuncia ~120 ms, query SQL ~250 ms (prima connessione compresa). Strada usata: tipo nativo `SqlVector<float>` per `@q`. Build della solution senza warning; 105 test verdi (10 nuovi: repository di clausole e sinistri su `Sinistri_Test` con vettori a 4 dimensioni scritti a mano, `RicercaService` con finti).
+
+Interventi per soddisfare gli scenari (come previsto: testi e soglia, non le query):
+
+| Intervento | Prima | Dopo | Motivo |
+|---|---|---|---|
+| `DistanzaMaxClausolaIntegrativa` (default, `appsettings.json` di Api e Cli) | 0,45 | **0,70** | con `embeddinggemma` le distanze reali stanno tra 0,45 e 0,75: a 0,45 non si aggiungeva mai nulla. Le esclusioni e franchigie pertinenti stavano sotto 0,69 (4.3 a 0,649 nello scenario 1), quelle fuori tema sopra 0,70 (4.4 "coordinatore sicurezza" a 0,710 nello scenario 3) |
+| Testo Art. 2.4 (casa) | — | aggiunti "tubazioni" e i danni a pavimenti, parquet, pareti, soffitti e controsoffitti, anche a un piano diverso | la 2.4 era terza (0,594) dietro 3.4 e 2.5; ora prima (0,519) |
+| Testo Art. 3.7 (casa) | — | aggiunti gli esempi "caldaie, televisori ed elettrodomestici", anche con guasto durante un temporale | la 3.7 (0,689) perdeva per 0,002 contro la 3.3 "Gelo" come migliore esclusione; ora prima (0,582) |
+
+Problema trovato e corretto: `sqlcmd -i db\003_seed_clausole.sql` senza `-f 65001` legge il file UTF-8 con la code page di Windows, riscrive 48 clausole con le lettere accentate corrotte e ne azzera gli embedding. Aggiunto `-f 65001` alle istruzioni di tutti gli script e di `fase-2.md`. Con il parametro corretto i testi tornano giusti e un secondo giro dello script non tocca nulla.
+
+Scostamenti:
+
+| Punto | Previsto | Fatto | Motivo |
+|---|---|---|---|
+| Query delle clausole | `ORDER BY Distanza` | `ORDER BY Distanza, Id` (anche nei `ROW_NUMBER`), `Rank` convertito in `int` | ordinamento stabile a parità di distanza; tipi allineati al record |
+| Filtro provincia | parametro | `DbString` ANSI a lunghezza fissa 2 | colonna `CHAR(2)`: niente conversione implicita (nota VARCHAR/NVARCHAR di `fase-2.md`) |
+| `RicercaService` | firma senza `top` | `top` opzionale (default dalle opzioni) | lo usano `--top` dei comandi di debug e le fasi successive |
+| API | `RicercaService` usato anche dall'API | registrato in Core, gli endpoint arrivano con la Fase 8 | — |
+
 ## 9. Commit proposto (non eseguito)
 
 ```
 fase 5: ricerca vettoriale delle clausole, ricerca ibrida dello storico e statistiche
+
+ClausolaRepository con query unica (prime N più esclusione e franchigia
+integrative entro soglia), SinistroRepository con ricerca ibrida (vettore +
+filtri SQL) e statistiche di liquidazione in SQL sull'insieme mostrato.
+RicercaService in Core con i tempi di embedding e query. Comandi di debug
+search-clausole e search-sinistri, con alias dei prodotti del piano.
+Soglia integrativa tarata a 0,70 sulle distanze reali; testi degli Art. 2.4
+e 3.7 casa ritoccati; -f 65001 nelle istruzioni sqlcmd degli script.
+
+Verifica: build della solution, 105 test verdi, 5 scenari demo soddisfatti
+su DbInit + embed.
 ```

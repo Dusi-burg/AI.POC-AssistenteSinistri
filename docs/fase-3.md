@@ -285,6 +285,8 @@ Scostamenti:
 | Polizze demo | massimale e franchigia non indicati | CF-DEMO-000001 300.000 / 250 €, CF-DEMO-000002 200.000 / 500 €, RP-DEMO-000001 1.000.000 / 2.500 € | — |
 | Bug trovato in verifica | — | `WeightedRandom` di Bogus vuole pesi che sommano a 1: senza normalizzazione il 90% dei sinistri era in `MI`. Corretto, con test sulla distribuzione | — |
 
+**Aggiornamento dalla Fase 5:** testi degli Art. 2.4 e 3.7 casa ritoccati per gli scenari demo 1 e 4 (dettagli in `fase-5.md` §8 bis).
+
 **Stop "morbido":** i testi delle 60 clausole sono in `db/003_seed_clausole.sql`. Da rileggere prima della Fase 4, perché ne dipendono retrieval, scheda e golden set.
 
 ## Commit proposto (non eseguito)

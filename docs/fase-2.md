@@ -169,7 +169,7 @@ Note di progetto:
 ## 3. Template SQL e dimensione del vettore
 
 Gli script usano le **variabili sqlcmd** `$(DatabaseName)` e `$(EmbeddingDimensions)`. Così:
-- da riga di comando si eseguono con `sqlcmd -S "(localdb)\localdev" -E -i db\002_schema.sql -v EmbeddingDimensions=768 -d Sinistri`;
+- da riga di comando si eseguono con `sqlcmd -S "(localdb)\localdev" -E -f 65001 -i db\002_schema.sql -v EmbeddingDimensions=768 -d Sinistri` (`-f 65001`: gli script sono UTF-8);
 - dal codice `SqlScriptRunner` (Data) legge il file, sostituisce `$(Nome)` con i valori di configurazione (solo interi validati e nomi di DB che rispettano la regex `^[A-Za-z0-9_]+$`, per evitare SQL injection), divide sui separatori `GO` e manda i batch in sequenza.
 
 Gli script sono file incorporati nell'assembly `Data` (`EmbeddedResource`), così `DbInit` e i test li trovano senza dipendere dalla cartella di lavoro.
