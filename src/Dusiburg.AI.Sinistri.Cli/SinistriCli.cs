@@ -22,7 +22,9 @@ internal static class SinistriCli
         {
             verbose,
             HealthCommand.Create(services),
-            EmbedCommand.Create(services)
+            EmbedCommand.Create(services),
+            SearchCommands.Clausole(services),
+            SearchCommands.Sinistri(services)
         };
 
         return await root.Parse(args).InvokeAsync();

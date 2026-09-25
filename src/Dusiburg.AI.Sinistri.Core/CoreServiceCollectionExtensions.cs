@@ -1,5 +1,6 @@
 using Dusiburg.AI.Sinistri.Core.Health;
 using Dusiburg.AI.Sinistri.Core.Options;
+using Dusiburg.AI.Sinistri.Core.Retrieval;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -22,6 +23,7 @@ public static class CoreServiceCollectionExtensions
 
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<HealthService>();
+        services.AddSingleton<RicercaService>();
 
         return services;
     }

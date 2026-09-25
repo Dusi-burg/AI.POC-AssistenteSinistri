@@ -10,8 +10,11 @@ public sealed class RetrievalOptions
 
     public int TopClausole { get; set; } = 5;
 
-    /// <summary>Distanza massima entro cui si aggiunge un'esclusione o una franchigia non già tra le prime (D10).</summary>
-    public double DistanzaMaxClausolaIntegrativa { get; set; } = 0.45;
+    /// <summary>
+    /// Distanza massima entro cui si aggiunge un'esclusione o una franchigia non già tra le prime (D10). Tarata in Fase 5 sugli
+    /// scenari demo con <c>embeddinggemma</c>: le pertinenti stanno sotto 0,69, quelle fuori tema sopra 0,70.
+    /// </summary>
+    public double DistanzaMaxClausolaIntegrativa { get; set; } = 0.70;
 
     public int TopSinistri { get; set; } = 10;
 
