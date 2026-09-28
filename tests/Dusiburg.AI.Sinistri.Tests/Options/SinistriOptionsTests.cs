@@ -17,10 +17,11 @@ public class SinistriOptionsTests
         Assert.That(options.OllamaContextLength, Is.EqualTo(8_192));
         Assert.That(options.EmbeddingProvider, Is.EqualTo(EmbeddingProviders.Ollama));
         Assert.That(options.EmbeddingEndpoint, Is.EqualTo(options.OllamaEndpoint));
-        Assert.That(options.EmbeddingModel, Is.EqualTo("bge-m3"));
+        Assert.That(options.EmbeddingModel, Is.EqualTo("embeddinggemma"), "scelta del CHECKPOINT 1b");
         Assert.That(options.EmbeddingNumGpu, Is.EqualTo(0), "D18: l'embedding non va mai in VRAM");
-        Assert.That(options.EmbeddingDimensions, Is.EqualTo(1024));
-        Assert.That(options.SogliaDuplicatoCosine, Is.EqualTo(0.08));
+        Assert.That(options.EmbeddingDimensions, Is.EqualTo(768));
+        Assert.That(options.SogliaDuplicatoCosine, Is.EqualTo(0.05), "tarata in Fase 7 sul fraud-scan");
+        Assert.That(options.SogliaDuplicatoDenuncia, Is.EqualTo(0.07), "tarata in Fase 7 sulla nuova denuncia");
         Assert.That(options.PromptCaptureDirectory, Is.Null);
         Assert.That(options.Warmup, Is.True);
     }
@@ -33,9 +34,10 @@ public class SinistriOptionsTests
         {
             ["OLLAMA_ENDPOINT"] = "http://gpu-box:11434",
             ["EMBEDDING_MODEL"] = "qwen3-embedding:0.6b",
-            ["EMBEDDING_DIMENSIONS"] = "768",
+            ["EMBEDDING_DIMENSIONS"] = "1024",
             ["EMBEDDING_NUM_GPU"] = "auto",
             ["SOGLIA_DUPLICATO_COSINE"] = "0.12",
+            ["SOGLIA_DUPLICATO_DENUNCIA"] = "0.1",
             ["SINISTRI_WARMUP"] = "false"
         });
 
@@ -44,9 +46,10 @@ public class SinistriOptionsTests
 
         Assert.That(options.EmbeddingEndpoint, Is.EqualTo(new Uri("http://gpu-box:11434")), "per ollama l'embedding usa l'endpoint di Ollama");
         Assert.That(options.EmbeddingModel, Is.EqualTo("qwen3-embedding:0.6b"));
-        Assert.That(options.EmbeddingDimensions, Is.EqualTo(768));
+        Assert.That(options.EmbeddingDimensions, Is.EqualTo(1024));
         Assert.That(options.EmbeddingNumGpu, Is.Null, "auto lascia la scelta a Ollama");
         Assert.That(options.SogliaDuplicatoCosine, Is.EqualTo(0.12));
+        Assert.That(options.SogliaDuplicatoDenuncia, Is.EqualTo(0.1));
         Assert.That(options.Warmup, Is.False);
     }
 
@@ -117,6 +120,7 @@ public class SinistriOptionsTests
     [TestCase("OLLAMA_ENDPOINT", "localhost:11434")]
     [TestCase("OLLAMA_NUM_CTX", "512")]
     [TestCase("SOGLIA_DUPLICATO_COSINE", "0,08")]
+    [TestCase("SOGLIA_DUPLICATO_DENUNCIA", "3")]
     [TestCase("SINISTRI_WARMUP", "si")]
     public void FromConfiguration_ValoreNonValido_ErroreConLaChiave(string key, string value)
     {

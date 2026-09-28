@@ -1,0 +1,76 @@
+@page
+@model Dusiburg.AI.Sinistri.Web.Pages.Clausole.RicercaModel
+@{
+    ViewData["Title"] = "Ricerca clausole";
+}
+
+<h1 class="h3">Ricerca clausole <span class="text-muted h6">pilastro A, catalogo semantico</span></h1>
+<p class="text-muted">Le clausole di polizza più vicine al testo, come le riceve il modello: oltre alle prime per distanza, l'esclusione e
+    la franchigia più vicine ("integrative"), perché il modello veda anche ciò che limita la copertura.</p>
+
+<form method="get" class="card card-body mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-7">
+            <label asp-for="Testo" class="form-label">Testo</label>
+            <input asp-for="Testo" class="form-control" placeholder="Il cliente dice che la grandine ha rotto i pannelli solari sul tetto." />
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Prodotto" class="form-label">Prodotto</label>
+            <select asp-for="Prodotto" class="form-select">
+                @foreach (var prodotto in Enum.GetValues<Prodotto>())
+                {
+                    <option value="@prodotto">@prodotto.Descrizione()</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-1">
+            <label asp-for="Top" class="form-label">Top</label>
+            <input asp-for="Top" type="number" min="1" max="50" class="form-control" placeholder="5" />
+        </div>
+        <div class="col-md-1">
+            <button type="submit" class="btn btn-primary w-100">Cerca</button>
+        </div>
+    </div>
+</form>
+
+@if (Model.Errore is { } errore)
+{
+    <div class="alert alert-danger">@errore</div>
+}
+
+@if (Model.Risultato is { } risultato)
+{
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead><tr><th>#</th><th>Articolo</th><th>Tipo</th><th>Titolo</th><th>Vicinanza</th><th class="text-end">Distanza</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var clausola in risultato.Clausole)
+                {
+                    <tr>
+                        <td>@clausola.Rank</td>
+                        <td class="text-nowrap">
+                            <button type="button" class="btn btn-link p-0 align-baseline" data-dialog="@SinistriPresentation.DialogClausola(clausola.Id)">@clausola.Articolo</button>
+                        </td>
+                        <td><span class="badge @SinistriPresentation.TipoClausolaClass(clausola.Tipo)">@clausola.Tipo.Descrizione()</span></td>
+                        <td>@clausola.Titolo</td>
+                        <td><div class="barra-vicinanza"><span style="width: @SinistriPresentation.BarraVicinanza(clausola.Distanza)"></span></div></td>
+                        <td class="text-end">@SinistriPresentation.Distanza(clausola.Distanza)</td>
+                        <td class="small text-muted">@(clausola.Integrativa ? "integrativa" : "")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <p class="small text-muted">Tempi: embedding @risultato.Tempi.Embedding.TotalMilliseconds.ToString("0") ms · query SQL @risultato.Tempi.Query.TotalMilliseconds.ToString("0") ms</p>
+
+    @foreach (var clausola in risultato.Clausole)
+    {
+        <dialog id="@SinistriPresentation.DialogClausola(clausola.Id)" class="dialog-clausola">
+            <div class="d-flex justify-content-between align-items-start gap-3">
+                <h2 class="h6 mb-1">@clausola.Articolo — @clausola.Titolo</h2>
+                <form method="dialog"><button class="btn-close" aria-label="Chiudi"></button></form>
+            </div>
+            <p class="mb-0">@clausola.Testo</p>
+        </dialog>
+    }
+}

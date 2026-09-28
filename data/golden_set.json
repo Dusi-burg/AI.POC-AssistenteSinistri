@@ -1,0 +1,155 @@
+{
+  "versione": 1,
+  "casi": [
+    {
+      "id": "G01",
+      "prodotto": "CasaFabbricati",
+      "denuncia": "Al rientro dalle vacanze abbiamo trovato la cucina allagata: si è staccato il tubo di carico della lavastoviglie e l'acqua ha rovinato il parquet.",
+      "attese": {
+        "rilevanti": ["Art. 2.4", "Art. 2.5", "Art. 4.3", "Art. 3.4"],
+        "esclusioniDaNonPerdere": ["Art. 3.4"]
+      },
+      "note": "acqua condotta con possibile usura del raccordo"
+    },
+    {
+      "id": "G02",
+      "prodotto": "CasaFabbricati",
+      "denuncia": "Il vicino del piano di sotto ci segnala macchie sul soffitto del suo bagno: perde un tubo del riscaldamento che passa sotto il nostro pavimento.",
+      "attese": {
+        "rilevanti": ["Art. 2.4", "Art. 2.5", "Art. 2.9", "Art. 4.3", "Art. 3.4"],
+        "esclusioniDaNonPerdere": ["Art. 3.4"]
+      },
+      "note": "acqua condotta con danni a terzi (RC della proprietà)"
+    },
+    {
+      "id": "G03",
+      "prodotto": "CasaFabbricati",
+      "denuncia": "Da mesi quando piove entra acqua dal soffitto della mansarda: le tegole sono vecchie e la guaina è consumata, adesso il cartongesso si è staccato.",
+      "attese": {
+        "rilevanti": ["Art. 2.2", "Art. 3.1", "Art. 3.2", "Art. 4.2"],
+        "esclusioniDaNonPerdere": ["Art. 3.1"]
+      },
+      "note": "infiltrazione da tetto non manutenuto"
+    },
+    {
+      "id": "G04",
+      "prodotto": "CasaFabbricati",
+      "denuncia": "Nella casa in montagna, chiusa da gennaio e senza riscaldamento acceso, è scoppiato un tubo per il gelo e l'acqua ha allagato il bagno e il corridoio.",
+      "attese": {
+        "rilevanti": ["Art. 2.4", "Art. 3.3", "Art. 1.3", "Art. 4.3"],
+        "esclusioniDaNonPerdere": ["Art. 3.3"]
+      },
+      "note": "gelo in seconda casa non abitata: la definizione di scoppio esclude il gelo"
+    },
+    {
+      "id": "G05",
+      "prodotto": "CasaFabbricati",
+      "denuncia": "Una grandinata fortissima ha spaccato i vetri dei lucernari e ha ammaccato le tapparelle in alluminio della villetta.",
+      "attese": {
+        "rilevanti": ["Art. 2.2", "Art. 2.3", "Art. 3.6", "Art. 4.2"],
+        "esclusioniDaNonPerdere": ["Art. 3.6"]
+      },
+      "note": "grandine su serramenti e lucernari: estensione 2.3 solo se richiamata"
+    },
+    {
+      "id": "G06",
+      "prodotto": "CasaFabbricati",
+      "denuncia": "Durante la tempesta di stanotte il vento ha sollevato un pezzo del tetto e ha fatto cadere il comignolo; nelle stanze sotto è entrata la pioggia.",
+      "attese": {
+        "rilevanti": ["Art. 2.2", "Art. 1.6", "Art. 4.2", "Art. 3.1"],
+        "esclusioniDaNonPerdere": ["Art. 3.1"]
+      },
+      "note": "vento e tegole: da escludere la mancata manutenzione della copertura"
+    },
+    {
+      "id": "G07",
+      "prodotto": "CasaFabbricati",
+      "denuncia": "Un fulmine è caduto sull'antenna del palazzo: da allora non funzionano più il frigorifero, il router e il motore del cancello.",
+      "attese": {
+        "rilevanti": ["Art. 2.6", "Art. 1.7", "Art. 3.7", "Art. 4.4"],
+        "esclusioniDaNonPerdere": ["Art. 3.7"]
+      },
+      "note": "fulmine con danni ad apparecchi elettrici: età degli apparecchi"
+    },
+    {
+      "id": "G08",
+      "prodotto": "CasaFabbricati",
+      "denuncia": "La canna fumaria della stufa a legna ha preso fuoco: il fumo ha annerito il soggiorno e i vigili del fuoco hanno dovuto aprire il controsoffitto.",
+      "attese": {
+        "rilevanti": ["Art. 2.1", "Art. 2.11", "Art. 4.1"],
+        "esclusioniDaNonPerdere": []
+      },
+      "note": "incendio da canna fumaria, con spese di demolizione e sgombero"
+    },
+    {
+      "id": "G09",
+      "prodotto": "CasaFabbricati",
+      "denuncia": "Mentre eravamo al lavoro hanno forzato la porta blindata e si sono portati via i gioielli e un computer portatile.",
+      "attese": {
+        "rilevanti": ["Art. 2.7", "Art. 2.8", "Art. 1.8", "Art. 4.5"],
+        "esclusioniDaNonPerdere": []
+      },
+      "note": "furto con scasso, guasti dei ladri alla porta"
+    },
+    {
+      "id": "G10",
+      "prodotto": "CasaFabbricati",
+      "denuncia": "Dal garage sono spariti la bicicletta elettrica e due borse; la basculante era chiusa ma non ci sono segni di forzatura.",
+      "attese": {
+        "rilevanti": ["Art. 2.7", "Art. 3.8", "Art. 1.8", "Art. 4.5"],
+        "esclusioniDaNonPerdere": ["Art. 3.8"]
+      },
+      "note": "furto senza segni di scasso"
+    },
+    {
+      "id": "G11",
+      "prodotto": "CasaFabbricati",
+      "denuncia": "Mio figlio giocando a pallone in casa ha rotto il vetro della porta finestra del soggiorno e lo specchio dell'ingresso.",
+      "attese": {
+        "rilevanti": ["Art. 2.10", "Art. 4.1"],
+        "esclusioniDaNonPerdere": []
+      },
+      "note": "rottura accidentale di cristalli"
+    },
+    {
+      "id": "G12",
+      "prodotto": "RcProfTecnici",
+      "denuncia": "Il committente contesta allo studio l'errato dimensionamento delle travi del capannone: sono comparse crepe e bisogna rinforzare la struttura.",
+      "attese": {
+        "rilevanti": ["Art. 2.1", "Art. 2.6", "Art. 1.1", "Art. 4.1"],
+        "esclusioniDaNonPerdere": []
+      },
+      "note": "errore di calcolo strutturale con costi di consolidamento"
+    },
+    {
+      "id": "G13",
+      "prodotto": "RcProfTecnici",
+      "denuncia": "L'impresa ha realizzato i balconi a una quota diversa da quella di progetto e l'ingegnere direttore dei lavori non se n'è accorto; il condominio chiede i costi per rifarli.",
+      "attese": {
+        "rilevanti": ["Art. 2.2", "Art. 2.6", "Art. 1.1", "Art. 4.1"],
+        "esclusioniDaNonPerdere": []
+      },
+      "note": "direzione lavori e difformità dal progetto"
+    },
+    {
+      "id": "G14",
+      "prodotto": "RcProfTecnici",
+      "denuncia": "L'ispettorato ha multato il cantiere per carenze nel piano di sicurezza e un operaio si è ferito; il coordinatore per la sicurezza è il nostro assicurato.",
+      "attese": {
+        "rilevanti": ["Art. 2.3", "Art. 3.3", "Art. 4.4", "Art. 4.1"],
+        "esclusioniDaNonPerdere": ["Art. 3.3"]
+      },
+      "note": "coordinatore per la sicurezza: danno alla persona coperto, sanzione esclusa, sottolimite"
+    },
+    {
+      "id": "G15",
+      "prodotto": "RcProfTecnici",
+      "denuncia": "È arrivata la lettera dell'avvocato di un cliente per una ristrutturazione che l'architetto aveva progettato nel 2012, molto prima di assicurarsi con noi.",
+      "attese": {
+        "rilevanti": ["Art. 1.5", "Art. 1.4", "Art. 3.4", "Art. 1.3"],
+        "esclusioniDaNonPerdere": ["Art. 3.4"]
+      },
+      "note": "errore commesso prima del periodo di retroattività (claims made)"
+    }
+  ]
+}

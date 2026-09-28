@@ -1,0 +1,56 @@
+{
+  "generatoIl": "2026-09-28",
+  "randomSeed": 20260924,
+  "coppie": [
+    {
+      "originale": "SIN-2026-000089",
+      "duplicato": "SIN-2026-000153",
+      "tipo": "StessoContraente"
+    },
+    {
+      "originale": "SIN-2026-000050",
+      "duplicato": "SIN-2026-000082",
+      "tipo": "StessoContraente"
+    },
+    {
+      "originale": "SIN-2026-000053",
+      "duplicato": "SIN-2026-000081",
+      "tipo": "StessoContraente"
+    },
+    {
+      "originale": "SIN-2025-000043",
+      "duplicato": "SIN-2026-000022",
+      "tipo": "StessoContraente"
+    },
+    {
+      "originale": "SIN-2026-000037",
+      "duplicato": "SIN-2026-000120",
+      "tipo": "StessoContraente"
+    },
+    {
+      "originale": "SIN-2025-000051",
+      "duplicato": "SIN-2026-000026",
+      "tipo": "StessoRiparatore"
+    },
+    {
+      "originale": "SIN-2026-000070",
+      "duplicato": "SIN-2026-000109",
+      "tipo": "StessoRiparatore"
+    },
+    {
+      "originale": "SIN-2026-000008",
+      "duplicato": "SIN-2026-000065",
+      "tipo": "StessoRiparatore"
+    },
+    {
+      "originale": "SIN-2025-000049",
+      "duplicato": "SIN-2026-000012",
+      "tipo": "StessoRiparatore"
+    },
+    {
+      "originale": "SIN-2026-000032",
+      "duplicato": "SIN-2026-000100",
+      "tipo": "StessoRiparatore"
+    }
+  ]
+}

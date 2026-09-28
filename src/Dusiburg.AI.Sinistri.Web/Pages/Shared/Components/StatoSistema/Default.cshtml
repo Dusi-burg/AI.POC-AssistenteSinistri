@@ -1,0 +1,5 @@
+@model Dusiburg.AI.Sinistri.Web.ViewComponents.StatoSistema
+<a class="nav-link d-flex align-items-center gap-2" asp-page="/Stato/Index" title="@Model.Dettaglio">
+    <span class="stato-pallino @SinistriPresentation.ProbeClass(Model.Stato)" aria-hidden="true"></span>
+    <span>@Model.Etichetta</span>
+</a>

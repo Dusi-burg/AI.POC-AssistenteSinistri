@@ -1,0 +1,102 @@
+@page
+@model Dusiburg.AI.Sinistri.Web.Pages.Storico.RicercaModel
+@{
+    ViewData["Title"] = "Ricerca nello storico";
+}
+
+<div class="d-flex flex-wrap align-items-baseline justify-content-between gap-2">
+    <h1 class="h3">Ricerca nello storico <span class="text-muted h6">pilastro B, ricerca ibrida</span></h1>
+    <a class="btn btn-outline-secondary btn-sm" asp-page="/Storico/Ricerca" asp-route-scenario="@Model.Scenario5.Numero" title="@Model.Scenario5.Testo">Scenario @Model.Scenario5.Numero</a>
+</div>
+<p class="text-muted">Sinistri chiusi o respinti simili al testo: i filtri (prodotto, provincia, importo, causa, anni) e la distanza
+    vettoriale sono una sola query SQL. Le statistiche sono calcolate dal database sugli stessi sinistri mostrati.</p>
+
+<form method="get" class="card card-body mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-12">
+            <label asp-for="Testo" class="form-label">Testo</label>
+            <input asp-for="Testo" class="form-control" placeholder="sovratensione ha danneggiato il quadro elettrico e l'inverter" />
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Prodotto" class="form-label">Prodotto</label>
+            <select asp-for="Prodotto" class="form-select">
+                @foreach (var prodotto in Enum.GetValues<Prodotto>())
+                {
+                    <option value="@prodotto">@prodotto.Descrizione()</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Causa" class="form-label">Causa</label>
+            <select asp-for="Causa" class="form-select">
+                <option value="">(tutte)</option>
+                @foreach (var gruppo in IndexModel.CausePerProdotto())
+                {
+                    <optgroup label="@gruppo.Key.Descrizione()">
+                        @foreach (var causa in gruppo)
+                        {
+                            <option value="@causa">@causa.Descrizione()</option>
+                        }
+                    </optgroup>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label asp-for="Provincia" class="form-label">Provincia</label>
+            <input asp-for="Provincia" class="form-control" maxlength="2" placeholder="MI" />
+        </div>
+        <div class="col-md-2">
+            <label asp-for="ImportoMin" class="form-label">Liquidato min (€)</label>
+            <input asp-for="ImportoMin" type="number" min="0" step="100" class="form-control" />
+        </div>
+        <div class="col-md-1">
+            <label asp-for="Anni" class="form-label">Anni</label>
+            <input asp-for="Anni" type="number" min="1" max="20" class="form-control" placeholder="5" />
+        </div>
+        <div class="col-md-1">
+            <button type="submit" class="btn btn-primary w-100">Cerca</button>
+        </div>
+    </div>
+</form>
+
+@if (Model.Errore is { } errore)
+{
+    <div class="alert alert-danger">@errore</div>
+}
+
+@if (Model.Risultato is { } risultato)
+{
+    <div class="row g-3">
+        <div class="col-lg-9">
+            <div class="table-responsive">
+                <table class="table table-sm align-middle small">
+                    <thead><tr><th>Numero</th><th>Data evento</th><th>Prov.</th><th>Causa</th><th>Stato</th><th class="text-end">Liquidato</th><th>Vicinanza</th><th class="text-end">Distanza</th><th>Descrizione</th></tr></thead>
+                    <tbody>
+                        @foreach (var simile in risultato.Simili)
+                        {
+                            <tr>
+                                <td class="text-nowrap"><a asp-page="/Sinistri/Dettaglio" asp-route-numero="@simile.Numero">@simile.Numero</a></td>
+                                <td>@simile.DataEvento.ToString("dd/MM/yyyy")</td>
+                                <td>@simile.Provincia</td>
+                                <td>@simile.Causa.Descrizione()</td>
+                                <td><span class="badge @SinistriPresentation.StatoSinistroClass(simile.Stato)">@simile.Stato</span></td>
+                                <td class="text-end text-nowrap">@SinistriPresentation.Euro(simile.ImportoLiquidato)</td>
+                                <td><div class="barra-vicinanza"><span style="width: @SinistriPresentation.BarraVicinanza(simile.Distanza)"></span></div></td>
+                                <td class="text-end">@SinistriPresentation.Distanza(simile.Distanza)</td>
+                                <td>@Formati.Tronca(simile.Descrizione, 110)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            @if (risultato.Simili.Count == 0)
+            {
+                <p class="text-muted">Nessun sinistro con questi filtri.</p>
+            }
+        </div>
+        <div class="col-lg-3">
+            <partial name="_Statistiche" model="risultato.Statistiche" />
+        </div>
+    </div>
+    <p class="small text-muted mt-2">Tempi: embedding del testo @risultato.Tempi.Embedding.TotalMilliseconds.ToString("0") ms · query SQL (ricerca ibrida e statistiche) @risultato.Tempi.Query.TotalMilliseconds.ToString("0") ms</p>
+}
