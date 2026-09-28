@@ -148,7 +148,9 @@ i template del seed ripetono le stesse descrizioni.
   browser e salva l'esito in memoria; la pagina carica `/?esito={id}`, disegnata da Razor. Senza JavaScript il form funziona con un
   POST classico.
 - **Web**: pagine Pre-istruttoria (scenari 1–4, articoli citati che aprono il testo della clausola, antifrode, statistiche, tempi,
-  link alla traccia nel dashboard, download Markdown), Clausole, Storico, Sinistro, Antifrode, Stato. Due client HTTP: letture con il
+  link alla traccia nel dashboard, download Markdown), Clausole, Storico, Sinistro, Antifrode, Stato; menu **Dati demo** (Fase 9b) con
+  il catalogo delle clausole, le polizze e lo storico dei sinistri paginato e filtrabile. Il catalogo è anche in `docs/clausole.md`,
+  generato con `export-clausole` e verificato da un test contro il seed. Due client HTTP: letture con il
   resilience handler standard, pre-istruttoria e fraud-scan senza retry e con timeout di 5 minuti.
 
 ## 10. Valutazione

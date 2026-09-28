@@ -67,11 +67,16 @@ public sealed class IndexModel(
 
     public string? Errore { get; private set; }
 
-    public async Task OnGetAsync(int? scenario, Guid? esito, CancellationToken cancellationToken)
+    /// <param name="polizza">Polizza precompilata, dal dettaglio della polizza nei dati demo (fase-9b.md §3.2).</param>
+    public async Task OnGetAsync(int? scenario, Guid? esito, string? polizza, CancellationToken cancellationToken)
     {
         if (scenario is { } numero && Scenari.FirstOrDefault(s => s.Numero == numero) is { } demo)
         {
             Modulo = new ModuloDenuncia { NumeroPolizza = demo.NumeroPolizza, Denuncia = demo.Testo, Causa = demo.Causa };
+        }
+        else if (!string.IsNullOrWhiteSpace(polizza))
+        {
+            Modulo = new ModuloDenuncia { NumeroPolizza = polizza.Trim() };
         }
 
         if (esito is { } id)

@@ -62,6 +62,8 @@ data del seed).
 ## Sequenza per una demo di 15 minuti
 
 1. **Stato** (1 min): tutto verde; modelli locali, embedding su CPU e chat su GPU; conteggi dei dati sintetici.
+   **Dati demo** (1 min, facoltativo): il catalogo delle clausole (anche in [`clausole.md`](clausole.md), da stampare), la polizza
+   `CF-DEMO-000001` con i suoi sinistri, lo storico con i quasi-duplicati marcati ⧉.
 2. **Clausole** (2 min): scenario 2 nella ricerca clausole. Le prime per distanza più l'esclusione 3.6 "integrativa": il modello vede
    anche ciò che limita la copertura. Un clic sull'articolo apre il testo.
 3. **Pre-istruttoria, scenario 1** (4 min): i passi compaiono uno alla volta (embedding, SQL, modello, antifrode). Nella scheda:

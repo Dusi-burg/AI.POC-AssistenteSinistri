@@ -123,6 +123,7 @@ Non ci sono migration: dopo una modifica allo schema si riesegue `DbInit`, poi `
 | `ask "<denuncia>" --polizza <numero> [--data-evento] [--causa] [--riparatore] [--out file.md] [--raw]` | Scheda di pre-istruttoria in Markdown |
 | `fraud-scan [--mesi 12] [--soglia] [--valuta]` | Coppie di quasi-duplicati e precision/recall sulle coppie attese |
 | `eval [--top 5] [--embedding-model <m> --embedding-provider <p> --embedding-dimensions <n>]` | Valutazione sul golden set, report in `eval/` |
+| `export-clausole [--out docs/clausole.md]` | Scrive il catalogo delle clausole in Markdown ([docs/clausole.md](docs/clausole.md)) |
 | `bench-search [--sinistri 50000] [--ripetizioni 50] [--k 10]` | Scansione esatta contro indice DiskANN con `VECTOR_SEARCH` su un DB dedicato, report in `eval/` |
 
 ## Valutazione
@@ -163,6 +164,7 @@ mano; nessun test chiama Ollama. La CI li salta quando la LocalDB del runner è 
 - [docs/il-progetto-in-breve.md](docs/il-progetto-in-breve.md) — che cosa fa l'assistente e perché ci si può fidare, per chi non sviluppa.
 - [docs/architettura.md](docs/architettura.md) — la specifica, fonte di verità.
 - [docs/demo.md](docs/demo.md) — preparazione, scenari e scaletta di una demo di 15 minuti.
+- [docs/clausole.md](docs/clausole.md) — il catalogo delle 60 clausole di polizza (fittizie), generato dal database.
 - `docs/PLAN.md` e `docs/fase-*.md` — il piano per fasi con l'esito di ciascuna.
 
 ## Licenza

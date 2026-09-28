@@ -21,7 +21,7 @@
 
 <section id="esito" class="mb-5">
     <div class="d-flex flex-wrap align-items-baseline justify-content-between gap-2 mb-3">
-        <h2 class="h4 mb-0">Scheda — polizza @polizza.Numero</h2>
+        <h2 class="h4 mb-0">Scheda — polizza <a asp-page="/Dati/Polizza" asp-route-numero="@polizza.Numero">@polizza.Numero</a></h2>
         <div class="d-flex flex-wrap gap-2">
             <a class="btn btn-outline-primary btn-sm" asp-page="/Index" asp-page-handler="Scarica" asp-route-esito="@Model.Salvato.Id.ToString("N")">Scarica Markdown</a>
             @if (Model.LinkTraccia is { } traccia)
@@ -204,7 +204,9 @@
             </div>
             <p class="mb-2"><span class="badge @SinistriPresentation.TipoClausolaClass(clausola.Tipo)">@clausola.Tipo.Descrizione()</span>
                 <span class="text-muted small">distanza @SinistriPresentation.Distanza(clausola.Distanza)</span></p>
-            <p class="mb-0">@clausola.Testo</p>
+            <p class="mb-2">@clausola.Testo</p>
+            <a class="small" asp-page="/Dati/Clausole" asp-route-prodotto="@polizza.Prodotto"
+               asp-fragment="@OrdineArticoli.Ancora(polizza.Prodotto, clausola.Articolo)">apri nel catalogo delle clausole</a>
         </dialog>
     }
 </section>

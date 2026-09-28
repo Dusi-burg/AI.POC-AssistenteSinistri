@@ -16,12 +16,20 @@
         <span class="badge @SinistriPresentation.StatoSinistroClass(s.Stato)">@s.Stato</span>
     </div>
 
+    @if (Model.Gemello is { } gemello)
+    {
+        <div class="alert alert-warning py-2 small">
+            ⧉ Quasi-duplicato inserito dal seed insieme a <a asp-page="/Sinistri/Dettaglio" asp-route-numero="@gemello">@gemello</a>:
+            è una delle coppie che il fraud-scan deve trovare.
+        </div>
+    }
+
     <div class="row g-3">
         <div class="col-lg-5">
             <div class="card">
                 <div class="card-body small">
                     <dl class="row mb-0">
-                        <dt class="col-5">Polizza</dt><dd class="col-7">@s.NumeroPolizza · @s.Prodotto.Descrizione()</dd>
+                        <dt class="col-5">Polizza</dt><dd class="col-7"><a asp-page="/Dati/Polizza" asp-route-numero="@s.NumeroPolizza">@s.NumeroPolizza</a> · @s.Prodotto.Descrizione()</dd>
                         <dt class="col-5">Contraente</dt><dd class="col-7">@s.Contraente</dd>
                         <dt class="col-5">Riparatore</dt><dd class="col-7">@(s.Riparatore ?? "—")</dd>
                         <dt class="col-5">Data evento</dt><dd class="col-7">@s.DataEvento.ToString("dd/MM/yyyy")</dd>

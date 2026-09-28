@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using Dusiburg.AI.Sinistri.Core.Consultazione;
+using Dusiburg.AI.Sinistri.Core.Dominio;
 using Dusiburg.AI.Sinistri.Core.Health;
 using Dusiburg.AI.Sinistri.Core.PreIstruttoria;
 using Dusiburg.AI.Sinistri.Web.Api;
@@ -139,6 +140,74 @@ public class WebPageTests
     }
 
     [Test]
+    public async Task DatiStorico_FiltriNellIndirizzo()
+    {
+        //SETUP
+        var pagina = new Pagina<SinistroElenco>([ConsultazioneFinta.Sinistro with { Gemello = "SIN-2026-000153" }], 2, 25, 60);
+        var api = new ApiPreparata().Json("/api/sinistri", pagina).Json("/api/riparatori", new[] { new RiparatoreVoce(6, "Idraulica Rossi") });
+        await using WebApplicationFactory<WebEntryPoint> factory = Factory(api);
+        using HttpClient client = factory.CreateClient();
+
+        //SUT
+        string page = await client.GetStringAsync("/Dati/Storico?Prodotto=CasaFabbricati&Causa=FenomenoElettrico&Provincia=MI&Testo=quadro&pagina=2", CancellationToken);
+
+        Uri elenco = api.Richieste.First(u => u.AbsolutePath == "/api/sinistri");
+        Assert.That(elenco.Query, Is.EqualTo("?prodotto=CasaFabbricati&causa=FenomenoElettrico&provincia=MI&testo=quadro&pagina=2"));
+        Assert.That(api.Richieste.Count(u => u.AbsolutePath == "/api/sinistri"), Is.EqualTo(4), "la pagina e i tre conteggi per stato");
+        Assert.That(page, Does.Contain("<option value=\"FenomenoElettrico\" selected=\"selected\">").And.Contain("value=\"MI\""));
+        Assert.That(page, Does.Contain("60 sinistri · pagina 2 di 3"));
+        Assert.That(page, Does.Contain("Causa=FenomenoElettrico&amp;Provincia=MI&amp;Testo=quadro&amp;pagina=3"), "i link di pagina conservano i filtri");
+        Assert.That(page, Does.Contain("href=\"/Sinistri/Dettaglio?numero=SIN-2026-000153\"").And.Contain("⧉"), "gemello marcato");
+        Assert.That(page, Does.Contain("href=\"/Dati/Polizza?numero=CF-DEMO-000001\""));
+    }
+
+    [Test]
+    public async Task DatiClausole_CatalogoPerTipo()
+    {
+        //SETUP
+        ClausolaDettaglio[] clausole =
+        [
+            new(1, Core.Dominio.Prodotto.CasaFabbricati, "Art. 1.5", Core.Dominio.TipoClausola.Definizione, "Acqua condotta", "Definizione di acqua condotta."),
+            new(21, Core.Dominio.Prodotto.CasaFabbricati, "Art. 2.4", Core.Dominio.TipoClausola.Garanzia, "Acqua condotta", "La Società indennizza."),
+            new(34, Core.Dominio.Prodotto.CasaFabbricati, "Art. 3.4", Core.Dominio.TipoClausola.Esclusione, "Usura", "Sono esclusi i danni da usura."),
+        ];
+        var api = new ApiPreparata().Json("/api/clausole", clausole);
+        await using WebApplicationFactory<WebEntryPoint> factory = Factory(api);
+        using HttpClient client = factory.CreateClient();
+
+        //SUT
+        string page = await client.GetStringAsync("/Dati/Clausole?prodotto=CasaFabbricati&testo=acqua", CancellationToken);
+
+        Assert.That(api.Richieste.First(u => u.AbsolutePath == "/api/clausole").Query, Is.EqualTo("?prodotto=CasaFabbricati&testo=acqua"));
+        Assert.That(page.IndexOf("id=\"tipo-Definizione\"", StringComparison.Ordinal), Is.LessThan(page.IndexOf("id=\"tipo-Garanzia\"", StringComparison.Ordinal)));
+        Assert.That(page, Does.Contain("<article id=\"casafabbricati-art-2-4\"").And.Contain("La Società indennizza."));
+        Assert.That(page, Does.Contain("Definizione · 1").And.Contain("Garanzia · 1").And.Contain("Esclusione · 1"));
+        Assert.That(page, Does.Not.Contain("id=\"tipo-Franchigia\""), "sezioni vuote omesse");
+    }
+
+    [Test]
+    public async Task DatiPolizza_SinistriELinkPreIstruttoria()
+    {
+        //SETUP
+        var api = new ApiPreparata()
+            .Json("/api/polizze/CF-DEMO-000001", DatiDemo.Polizza)
+            .Json("/api/sinistri", new Pagina<SinistroElenco>([ConsultazioneFinta.Sinistro], 1, 100, 1));
+        await using WebApplicationFactory<WebEntryPoint> factory = Factory(api);
+        using HttpClient client = factory.CreateClient();
+
+        //SUT
+        string page = await client.GetStringAsync("/Dati/Polizza?numero=CF-DEMO-000001", CancellationToken);
+        string preIstruttoria = await client.GetStringAsync("/?polizza=CF-DEMO-000001", CancellationToken);
+        HttpResponseMessage inesistente = await client.GetAsync("/Dati/Polizza?numero=CF-XXXX-000000", CancellationToken);
+
+        Assert.That(api.Richieste.First(u => u.AbsolutePath == "/api/sinistri").Query, Is.EqualTo("?polizza=CF-DEMO-000001&pagina=1&dimensione=100"));
+        Assert.That(page, Does.Contain("Polizza CF-DEMO-000001").And.Contain("Mario Bianchi").And.Contain("Sinistri denunciati (1)"));
+        Assert.That(page, Does.Contain("href=\"/?polizza=CF-DEMO-000001\"").And.Contain("SIN-2026-000024"));
+        Assert.That(preIstruttoria, Does.Contain("name=\"Modulo.NumeroPolizza\" value=\"CF-DEMO-000001\""));
+        Assert.That(inesistente.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+    }
+
+    [Test]
     public async Task Health_Raggiungibile()
     {
         //SETUP
@@ -179,6 +248,9 @@ public class WebPageTests
     {
         private readonly Dictionary<string, (string Contenuto, string MediaType)> _risposte = [];
 
+        /// <summary>Indirizzi chiesti all'API, query string compresa.</summary>
+        public List<Uri> Richieste { get; } = [];
+
         public ApiPreparata Json(string percorso, object dato)
         {
             _risposte[percorso] = (JsonSerializer.Serialize(dato, SinistriJson.Opzioni), "application/json");
@@ -195,6 +267,11 @@ public class WebPageTests
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+            lock (Richieste)
+            {
+                Richieste.Add(request.RequestUri!);
+            }
+
             if (request.RequestUri?.AbsolutePath is { } percorso && _risposte.TryGetValue(percorso, out var risposta))
             {
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)

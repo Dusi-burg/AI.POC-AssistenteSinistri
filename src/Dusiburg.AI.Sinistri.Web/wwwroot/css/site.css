@@ -85,3 +85,17 @@ body {
 .descrizione-affiancata {
   max-width: 28rem;
 }
+
+/* Fase 9b: catalogo delle clausole */
+
+.clausola-catalogo {
+  border-left: 0.25rem solid var(--bs-border-color);
+  padding: 0.25rem 0 0.25rem 0.75rem;
+  margin-bottom: 0.75rem;
+  scroll-margin-top: 1rem;
+}
+
+.clausola-catalogo:target {
+  border-left-color: var(--bs-primary);
+  background: var(--bs-primary-bg-subtle);
+}
