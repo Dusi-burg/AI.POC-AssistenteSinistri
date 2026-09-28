@@ -21,5 +21,6 @@
 ## Da fare alla ripresa
 
 1. (Utente) commit della Fase 10.1 (testo in `fase-10.md` §10.1 bis e nel riepilogo della sessione); controllo della CI al push.
-2. (Utente) revisione del golden set, prova della demo nel browser e schermate per `docs/images/`.
-3. **Fase 10**, altre estensioni facoltative su richiesta (`fase-10.md`): 10.2 embedding in T-SQL, 10.3 ricerca ibrida con full-text e RRF, 10.4 tool calling, 10.5 reranker su NPU, 10.6 provider Anthropic.
+2. (Utente) commit della **Fase 9b**, completata (`fase-9b.md` §6 bis): pagine "Dati demo" (catalogo clausole, polizze, storico) e `docs/clausole.md` con `export-clausole`; 170 test verdi.
+3. (Utente) revisione del golden set, prova della demo nel browser e schermate per `docs/images/`.
+4. **Fase 10**, altre estensioni facoltative su richiesta (`fase-10.md`): 10.2 embedding in T-SQL, 10.3 ricerca ibrida con full-text e RRF, 10.4 tool calling, 10.5 reranker su NPU, 10.6 provider Anthropic.

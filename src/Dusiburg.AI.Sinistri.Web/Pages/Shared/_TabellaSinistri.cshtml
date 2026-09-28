@@ -1,0 +1,42 @@
+@model IReadOnlyList<SinistroElenco>
+@* Tabella dello storico (fase-9b.md §3.3), usata anche dal dettaglio della polizza. *@
+@if (Model.Count == 0)
+{
+    <p class="text-muted">Nessun sinistro.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-sm align-middle small">
+            <thead>
+                <tr>
+                    <th>Numero</th><th>Denuncia</th><th>Polizza</th><th>Contraente</th><th>Causa</th><th>Stato</th><th>Prov.</th>
+                    <th class="text-end">Liquidato</th><th>Descrizione</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var s in Model)
+                {
+                    <tr>
+                        <td class="text-nowrap">
+                            <a asp-page="/Sinistri/Dettaglio" asp-route-numero="@s.Numero">@s.Numero</a>
+                            @if (s.Gemello is { } gemello)
+                            {
+                                <a asp-page="/Sinistri/Dettaglio" asp-route-numero="@gemello" class="ms-1 text-decoration-none"
+                                   title="Quasi-duplicato atteso di @gemello (inserito dal seed)">⧉</a>
+                            }
+                        </td>
+                        <td class="text-nowrap">@s.DataDenuncia.ToString("dd/MM/yyyy")</td>
+                        <td class="text-nowrap"><a asp-page="/Dati/Polizza" asp-route-numero="@s.NumeroPolizza">@s.NumeroPolizza</a></td>
+                        <td>@s.Contraente</td>
+                        <td>@s.Causa.Descrizione()</td>
+                        <td><span class="badge @SinistriPresentation.StatoSinistroClass(s.Stato)">@s.Stato</span></td>
+                        <td>@s.Provincia</td>
+                        <td class="text-end text-nowrap">@SinistriPresentation.Euro(s.ImportoLiquidato)</td>
+                        <td>@Formati.Tronca(s.Descrizione, 90)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

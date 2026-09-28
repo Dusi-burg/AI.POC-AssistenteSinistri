@@ -1,0 +1,62 @@
+@page
+@model Dusiburg.AI.Sinistri.Web.Pages.Dati.PolizzeModel
+@using Dusiburg.AI.Sinistri.Web.Pages.Dati
+@{
+    ViewData["Title"] = "Polizze";
+}
+
+<h1 class="h3">Polizze</h1>
+<p class="text-muted">Le polizze dei dati sintetici, con il numero di sinistri denunciati. Le tre polizze demo, usate dagli scenari, sono in cima.</p>
+
+<form method="get" class="card card-body mb-3">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-6">
+            <label asp-for="Cerca" class="form-label">Numero o contraente</label>
+            <input asp-for="Cerca" class="form-control" placeholder="CF-DEMO o Bianchi" />
+        </div>
+        <div class="col-md-3">
+            <div class="form-check">
+                <input asp-for="SoloDemo" class="form-check-input" />
+                <label asp-for="SoloDemo" class="form-check-label">solo polizze demo</label>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary w-100">Cerca</button>
+        </div>
+    </div>
+</form>
+
+@if (Model.Errore is { } errore)
+{
+    <div class="alert alert-danger">@errore</div>
+}
+
+@if (Model.Elenco is { } elenco)
+{
+    @await Html.PartialAsync("_Paginazione", new PaginazioneVista(elenco.Numero, elenco.Pagine, elenco.Totale, "polizze"))
+    <div class="table-responsive">
+        <table class="table table-sm align-middle small">
+            <thead>
+                <tr><th>Numero</th><th>Prodotto</th><th>Contraente</th><th>Validità</th><th class="text-end">Massimale</th><th class="text-end">Franchigia</th><th class="text-end">Sinistri</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var p in elenco.Righe)
+                {
+                    <tr class="@(p.Demo ? "table-info" : "")">
+                        <td class="text-nowrap">
+                            <a asp-page="/Dati/Polizza" asp-route-numero="@p.Numero">@p.Numero</a>
+                            @if (p.Demo) { <span class="badge text-bg-info ms-1">demo</span> }
+                        </td>
+                        <td>@p.Prodotto.Descrizione()</td>
+                        <td>@p.Contraente (@p.Provincia)</td>
+                        <td class="text-nowrap">@p.Decorrenza.ToString("dd/MM/yyyy") → @p.Scadenza.ToString("dd/MM/yyyy")</td>
+                        <td class="text-end text-nowrap">@SinistriPresentation.Euro(p.Massimale)</td>
+                        <td class="text-end text-nowrap">@SinistriPresentation.Euro(p.Franchigia)</td>
+                        <td class="text-end">@(p.Sinistri == 0 ? "—" : p.Sinistri.ToString())</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @await Html.PartialAsync("_Paginazione", new PaginazioneVista(elenco.Numero, elenco.Pagine, elenco.Totale, "polizze"))
+}

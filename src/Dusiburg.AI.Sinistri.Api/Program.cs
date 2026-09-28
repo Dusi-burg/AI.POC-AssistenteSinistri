@@ -40,6 +40,7 @@ app.MapPolizzaEndpoints();
 app.MapPreIstruttoriaEndpoints();
 app.MapRicercaEndpoints();
 app.MapAntifrodeEndpoints();
+app.MapDatiEndpoints();
 
 app.LogConnectionStringPresence(SqlConnectionFactory.ConnectionStringName);
 
