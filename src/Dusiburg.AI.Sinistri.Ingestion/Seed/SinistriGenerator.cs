@@ -8,9 +8,10 @@ namespace Dusiburg.AI.Sinistri.Ingestion.Seed;
 /// Sinistri da template (fase-3.md §3c): prima i casi che gli scenari demo devono trovare, poi la parte casuale fino alla quota di
 /// ogni causa. Gli Id sono provvisori (ordine di generazione): <see cref="SyntheticDataGenerator"/> rinumera per data di denuncia.
 /// </summary>
-internal sealed class SinistriGenerator(Randomizer random, DateOnly oggi, Anagrafiche anagrafiche)
+internal sealed class SinistriGenerator(Randomizer random, DateOnly oggi, Anagrafiche anagrafiche, int numeroSinistri = SinistriGenerator.SinistriDefault)
 {
-    public const int Sinistri = 400;
+    /// <summary>Sinistri della demo; il banco di prova della Fase 10.1 ne genera di più con le stesse proporzioni.</summary>
+    public const int SinistriDefault = 400;
 
     private const float QuotaAperti = 0.10f;
     private const float QuotaConRiparatore = 0.80f;
@@ -97,7 +98,7 @@ internal sealed class SinistriGenerator(Randomizer random, DateOnly oggi, Anagra
         DescrizioneTemplate[] tendenza = [.. profilo.Template.Where(t => t.Variante == VarianteEsito.TendenzaRespinto)];
         DescrizioneTemplate[] standard = [.. profilo.Template.Where(t => t.Variante == VarianteEsito.Standard)];
 
-        int totale = (int)Math.Round(Sinistri * profilo.Quota);
+        int totale = (int)Math.Round(numeroSinistri * profilo.Quota);
         int aperti = (int)Math.Round(totale * QuotaAperti);
         int respinti = Math.Max(0, (int)Math.Round(totale * profilo.QuotaRespinti) - forzati.Count(s => s.Stato == StatoSinistro.Respinto));
         int chiusi = totale - forzati.Length - aperti - respinti;
