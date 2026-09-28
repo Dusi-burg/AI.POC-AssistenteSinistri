@@ -10,9 +10,24 @@
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-dark bg-dark box-shadow mb-3">
+        <nav class="navbar navbar-expand-md navbar-dark bg-dark box-shadow mb-3">
             <div class="container">
-                <a class="navbar-brand" asp-page="/Index">Assistente pre-istruttoria sinistri</a>
+                <a class="navbar-brand" asp-page="/Index">Assistente sinistri</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
+                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Apri il menu">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-md-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item"><a class="nav-link" asp-page="/Index">Pre-istruttoria</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-page="/Clausole/Ricerca">Clausole</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-page="/Storico/Ricerca">Storico</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-page="/Antifrode/Index">Antifrode</a></li>
+                    </ul>
+                    <ul class="navbar-nav">
+                        <li class="nav-item">@await Component.InvokeAsync("StatoSistema")</li>
+                    </ul>
+                </div>
             </div>
         </nav>
     </header>
@@ -30,6 +45,7 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

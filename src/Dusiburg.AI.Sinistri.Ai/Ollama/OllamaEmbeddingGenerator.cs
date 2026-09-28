@@ -12,6 +12,9 @@ namespace Dusiburg.AI.Sinistri.Ai.Ollama;
 internal sealed class OllamaEmbeddingGenerator(IOllamaApiClient client, string model, int? numGpu, int dimensions)
     : IEmbeddingGenerator<string, Embedding<float>>
 {
+    /// <summary>Il modello resta caricato tra un batch e l'altro e durante la demo (fase-4.md §1).</summary>
+    internal const string KeepAlive = "30m";
+
     private readonly EmbeddingGeneratorMetadata _metadata = new("ollama", client.Uri, model, dimensions);
 
     public async Task<GeneratedEmbeddings<Embedding<float>>> GenerateAsync(
@@ -21,7 +24,8 @@ internal sealed class OllamaEmbeddingGenerator(IOllamaApiClient client, string m
         {
             Model = options?.ModelId ?? model,
             Input = [.. values],
-            Options = numGpu is null ? null : new RequestOptions { NumGpu = numGpu }
+            Options = numGpu is null ? null : new RequestOptions { NumGpu = numGpu },
+            KeepAlive = KeepAlive
         };
 
         EmbedResponse response = await client.EmbedAsync(request, cancellationToken);

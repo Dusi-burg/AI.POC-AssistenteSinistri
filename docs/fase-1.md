@@ -83,8 +83,8 @@ Si riprendono le versioni di O2C dove il pacchetto è lo stesso; per gli altri s
 | `Microsoft.Extensions.Hosting` | 10.0.12 | Cli, DbInit |
 | `Microsoft.Extensions.AI` | 10.10.0 | Ai |
 | `OllamaSharp` | 5.4.30 | Ai |
-| `Microsoft.Extensions.AI.OpenAI` | allineata a `Microsoft.Extensions.AI` | Ai (provider `openai-compatible`, Fase 1b) |
-| ONNX Runtime / Windows ML (`Microsoft.ML.OnnxRuntime` o pacchetto Windows ML, da scegliere in Fase 1b) + tokenizer (`Microsoft.ML.Tokenizers`) | ultima stabile | Ai (provider `onnx`, solo se P3 riesce) |
+| ~~`Microsoft.Extensions.AI.OpenAI`~~ | — | non usato: il provider `openai-compatible` è un client HTTP minimo in `Ai` (Fase 1b: il client OpenAI chiede i vettori in base64) |
+| `Microsoft.Windows.AI.MachineLearning` (Windows ML, self-contained) + `Microsoft.ML.Tokenizers` | 2.4.89 / 2.0.0 | per ora solo `tools/…EmbeddingBench` (Fase 1b, P3a) |
 | `System.CommandLine` | 2.0.12 | Cli |
 | `Microsoft.Data.SqlClient` | ultima stabile (≥ 6.1, per `SqlVector<float>`) | Data |
 | `Dapper` | ultima stabile | Data |

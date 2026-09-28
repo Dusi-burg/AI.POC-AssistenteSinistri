@@ -69,7 +69,7 @@ Popolare il DB con ~60 clausole scritte a mano, anagrafiche generate con Bogus (
 | Art. 4.1 | Franchigia | Franchigia frontale per sinistro |
 | Art. 4.2 | Franchigia | Scoperto eventi atmosferici (10%, minimo 500 €) |
 | Art. 4.3 | Franchigia | Franchigia acqua condotta e limite ricerca guasto (5.000 € per anno) |
-| Art. 4.4 | Franchigia | Limite fenomeno elettrico (3.000 € per anno, franchigia 150 €) |
+| Art. 4.4 | Franchigia | Limite fenomeno elettrico (6.000 € per anno, franchigia 150 €) — era 3.000 €, vedi "Esito" |
 | Art. 4.5 | Franchigia | Scoperto furto (20% in assenza di impianto antifurto) |
 
 ### RC_PROF_TECNICI (25 clausole)
@@ -167,7 +167,7 @@ Ogni template ha anche 2–4 **esiti di perizia** coerenti ("Il perito ha accert
 |---|---|---|---|---|---|---|
 | AcquaCondotta | Casa | 15 | 22% | 800–15.000 € | 20% | infiltrazioni da manutenzione, stillicidio, gelo in seconda casa |
 | EventoAtmosferico | Casa | 12 | 14% | 1.500–25.000 € | 15% | grandine su pannelli/serramenti |
-| FenomenoElettrico | Casa | 10 | 12% | 300–8.000 € | 10% | guasto meccanico, apparecchio vetusto |
+| FenomenoElettrico | Casa | 10 | 12% | 300–6.000 € | 10% | guasto meccanico, apparecchio vetusto |
 | Incendio | Casa | 8 | 5% | 2.000–80.000 € | 5% | — |
 | Furto | Casa | 8 | 7% | 500–12.000 € | 25% | nessun segno di scasso |
 | Cristalli | Casa | 8 | 4% | 200–2.500 € | 10% | — |
@@ -258,8 +258,49 @@ Classi coinvolte: (Ingestion) `SyntheticDataGenerator` (orchestratore), `Anagraf
 - Le query di copertura demo (es. `FenomenoElettrico` + `MI` + `Chiuso` + liquidato > 5.000) restituiscono almeno le quantità garantite.
 - Build della solution e test verdi.
 
+## Esito (2026-09-25) — in attesa della revisione dei testi delle clausole
+
+Criteri di completamento verificati (DbInit eseguito su un DB di verifica, poi eliminato, per non cancellare `Sinistri`):
+- `DbInit` in 1,7 s: 150 contraenti, 12 riparatori, 203 polizze (200 + 3 demo), 60 clausole (35 + 25), 410 sinistri (400 + 10 gemelli);
+- distribuzione per causa e stato allineata alla tabella dei parametri (quote e respinti esatti sui 400 sinistri base), 41 aperti (10%);
+- `data/duplicati_attesi.json` con 10 coppie, tutte presenti nel DB;
+- copertura demo: 8 sinistri `FenomenoElettrico` + `MI` + `Chiuso` + liquidato > 5.000 €; 19 acqua condotta chiusi con parquet e controsoffitto; 9 grandine su pannelli (7 respinti); 24 `ErroreProgettuale` su solai o strutture;
+- build della solution senza warning; 79 test verdi (72 in `Tests`, compresi i nuovi di generatore, template, catalogo demo, parafrasi con modello finto e seed su `Sinistri_Test`).
+
+Scostamenti:
+
+| Punto | Previsto | Fatto | Motivo |
+|---|---|---|---|
+| Art. 4.4 | limite fenomeno elettrico 3.000 € per anno | 6.000 € per anno (deciso in revisione); importi `FenomenoElettrico` della tabella dei parametri portati a 300–6.000 €; anche il liquidato dei gemelli resta entro il limite | con 3.000 € i ≥ 8 sinistri elettrici liquidati > 5.000 € richiesti dallo scenario 5 contraddirebbero la clausola |
+| Esiti di perizia | 2–4 per template | 2 esiti propri per i template demo e "tendenza respinto" (sia chiuso sia respinto); i template standard usano 2 esiti di chiusura e 2 di rifiuto comuni alla causa | ~107 template: esiti coerenti senza scriverne oltre 300 |
+| Stati dei sinistri | probabilità per sinistro | conteggi esatti per causa (10% aperti, quota di respinti al netto dei casi forzati), poi mescolati; i template "tendenza respinto" coprono circa metà dei respinti e sono respinti al 70% | con 16–88 sinistri per causa le estrazioni indipendenti uscivano dal ±5% (es. RcProprieta al 28% contro 15%) |
+| Contraenti e polizze | 150 contraenti, ~200 polizze (+3 demo) | 150 contraenti compresi i 3 demo, 200 polizze casuali + 3 demo | — |
+| Seed | `Seed:RandomSeed` | variabile d'ambiente `Seed__RandomSeed`, default `20260924` (`SyntheticDataGenerator.DefaultRandomSeed`) | stessa fonte delle altre manopole di DbInit (ambiente) |
+| Id | — | assegnati dal generatore e inseriti con `IDENTITY_INSERT`; i sinistri numerati in ordine di denuncia | il DB è appena ricreato; i riferimenti tra righe restano quelli del generatore |
+| Quasi-duplicati | 10 sinistri originali qualsiasi | originali casa, non aperti, su polizze valide per tutta la finestra; le loro date vengono spostate negli ultimi 10 mesi | i gemelli devono restare sulla stessa polizza o su una valida alla nuova data |
+| Riformulazione | sinonimi, ordine delle frasi, dettaglio | se sinonimi e stanza non cambiano nulla si cambia la circostanza; come ultima risorsa si aggiunge una frase d'apertura | alcune descrizioni di una sola frase restavano identiche |
+| `--parafrasa-con-llm` | gemelli esclusi | gemelli esclusi e **rigenerati** dall'originale parafrasato | altrimenti la coppia non sarebbe più un quasi-duplicato |
+| `--parafrasa-con-llm` | — | verificata con un modello finto, **non** eseguita su Ollama (15–30 minuti) | da provare quando serve |
+| Record dei dati sintetici | — | in Core (`Core.Seed`), usati da Ingestion e da `SeedRepository` (Data) | Data non referenzia Ingestion |
+| Polizze demo | massimale e franchigia non indicati | CF-DEMO-000001 300.000 / 250 €, CF-DEMO-000002 200.000 / 500 €, RP-DEMO-000001 1.000.000 / 2.500 € | — |
+| Bug trovato in verifica | — | `WeightedRandom` di Bogus vuole pesi che sommano a 1: senza normalizzazione il 90% dei sinistri era in `MI`. Corretto, con test sulla distribuzione | — |
+
+**Aggiornamento dalla Fase 5:** testi degli Art. 2.4 e 3.7 casa ritoccati per gli scenari demo 1 e 4 (dettagli in `fase-5.md` §8 bis).
+
+**Stop "morbido":** i testi delle 60 clausole sono in `db/003_seed_clausole.sql`. Da rileggere prima della Fase 4, perché ne dipendono retrieval, scheda e golden set.
+
 ## Commit proposto (non eseguito)
 
 ```
 fase 3: clausole di polizza e generatore di dati sintetici
+
+db/003_seed_clausole.sql con 60 clausole fittizie (35 casa, 25 RC), rieseguibile
+con MERGE che azzera l'embedding delle righe cambiate. Generatore deterministico
+in Ingestion (Bogus, seed fisso): anagrafiche, 400 sinistri da 107 template con
+copertura garantita degli scenari demo e 10 coppie di quasi-duplicati in
+data/duplicati_attesi.json. DemoCatalog in Core con polizze e scenari demo.
+DbInit: passo di seed con riepilogo e opzione --parafrasa-con-llm.
+
+Verifica: build della solution, 79 test verdi, DbInit in 1,7 s con 410 sinistri
+e distribuzione per causa e stato allineata ai parametri.
 ```

@@ -18,7 +18,7 @@ flowchart LR
     A --> S["Servizi Core<br/>PreIstruttoria · Ricerca · Antifrode · Health"]
     S --> D[("LocalDB localdev<br/>Sinistri")]
     S --> G{{"Ollama · GPU<br/>qwen3.5:9b"}}
-    S --> C{{"Ollama · CPU<br/>bge-m3"}}
+    S --> C{{"Ollama · CPU<br/>embeddinggemma"}}
     H["AppHost Aspire<br/>dashboard, tracce, manopole"] -.-> A
     H -.-> W
 ```
@@ -101,6 +101,11 @@ Risultato di `/api/health`, conteggi del dataset, `EmbeddingInfo`, parametri di 
 
 Con Razor Pages la risposta arriva in un'unica volta dopo 15–40 s; l'indicatore di attesa e i tempi per passo bastano per la demo, e il dettaglio dei passi si vede comunque nel dashboard di Aspire. Variante da decidere in review: endpoint SSE `POST /api/pre-istruttoria/stream` (un evento per passo completato) consumato da un piccolo script nella pagina. Stima: +½ giornata.
 
+**Deciso il 2026-09-28: streaming SSE.** Il browser non vede l'API, quindi la catena è browser → Web → API:
+- API `POST /api/pre-istruttoria/stream` (`text/event-stream`, `TypedResults.ServerSentEvents`): eventi `passo` (`AvanzamentoPreIstruttoria`, all'inizio e alla fine di ogni passo), poi `esito` (`EsitoPreIstruttoria`) oppure `errore` (`ProblemDetails`: a stream partito il codice HTTP è già 200);
+- Web `POST /pre-istruttoria/stream` (JSON dallo script): legge lo stream dell'API con `SseParser`, inoltra i passi come {passo, secondi}, salva l'esito in `EsitiRecenti` (cache in memoria, 2 ore) e chiude con `fine` {url: `/?esito={id}`};
+- la pagina carica l'url ricevuto: la scheda la disegna sempre Razor, niente rendering in JavaScript. Senza JavaScript il form fa il POST classico con post-redirect-get sullo stesso url.
+
 ---
 
 ## 4. Avvio della demo
@@ -145,8 +150,59 @@ Con l'AppHost avviato:
 - [ ] Spegnendo Ollama: `api` rossa nel dashboard, indicatore rosso nella Web, messaggio comprensibile.
 - [ ] Build della solution e test verdi.
 
+## 6 bis. Esito (2026-09-28)
+
+### Verifiche eseguite
+
+Con l'AppHost avviato (CLI di Aspire 13.5.4, dashboard su `https://localhost:17379`) e con API e Web anche da sole, su DB `Sinistri` e Ollama reali; le richieste sono state fatte via HTTP, non da un browser:
+
+| Punto della checklist | Esito |
+|---|---|
+| `api` e `web` sane | risorse `Running`, `/health` dell'API `Healthy`; pagina Stato con 9 controlli OK, indicatore "sistema pronto" |
+| Scenari demo dalla pagina | scenari 2 e 4 e la riformulazione di `SIN-2026-000024` tramite lo stream della Web: 15–23 s, 7 passi, scheda con 5 `<dialog>` delle clausole e pulsanti sugli articoli citati, statistiche "calcolate dal database", tempi per passo |
+| Traccia nel dashboard | link `https://localhost:17379/traces/detail/{traceId}`, trace id della richiesta del browser propagato all'API (W3C) |
+| Riquadro antifrode | `SIN-2026-000024`, stesso contraente, 0,057 |
+| Polizza inesistente | API 404 `ProblemDetails`; nello stream evento `errore` "Polizza inesistente: La polizza … non esiste." |
+| Scenari 5 e 6 | pagine Storico (`?scenario=5`) e Antifrode (`?scenario=6`) con risultati e tabelle precision/recall |
+| Download Markdown | `text/markdown`, `scheda-CF-DEMO-000001-yyyyMMdd-HHmm.md`, stesso renderer della CLI |
+| Ollama spento | simulato con `OLLAMA_ENDPOINT=http://127.0.0.1:11999` sull'AppHost (senza fermare Ollama): API `/health` 503, indicatore rosso "sistema non pronto" con il motivo nel tooltip, stream con "Modello non raggiungibile: Ollama non risponde: …" |
+| Build e test | solution senza warning; 146 test verdi (13 in più nel progetto Web.Tests) |
+
+Da guardare a occhio al primo avvio (non verificabile senza browser): impaginazione delle pagine, avanzamento dei passi a video (lo script ha la sintassi verificata con Node e il parser SSE provato con uno stream spezzato in pezzi), apertura della traccia nel dashboard.
+
+### Scostamenti
+
+| Punto | Previsto | Fatto | Motivo |
+|---|---|---|---|
+| Attesa della generazione | indicatore di attesa, SSE facoltativo | SSE (decisione in review), con fallback senza JavaScript | vedi "Streaming" |
+| Client senza retry | forma da verificare | `RemoveAllResilienceHandlers()` + `HttpClient.Timeout` 5 minuti | API marcata sperimentale (EXTEXP0001, soppressa solo lì): l'alternativa per nome di pipeline è più fragile |
+| `PolizzaQueryService`, `DatasetService` | servizi Core | un `IConsultazioneRepository` (Data), chiamato dagli endpoint | pure letture senza logica: un servizio in più non aggiungerebbe nulla |
+| Endpoint | tabella del §2 | in più `GET /api/configurazione` | parametri in sola lettura della pagina Stato |
+| Errori | `ProblemDetails` | in più 400 per JSON malformato e validazione, e log degli errori | in .NET 10 il middleware non registra più le eccezioni gestite da un `IExceptionHandler` |
+| Scenari nei pulsanti | `/api/scenari-demo` | `DemoCatalog` letto dalla Web (Core); l'endpoint resta per l'API | nessuna chiamata per dati costanti |
+| Contratti API/UI | — | in Core (`Consultazione/ContrattiApi.cs`), con `SinistriJson` (enum come stringhe) su entrambi i lati; `EmbeddingInfo` e i conteggi del seed spostati da Data a Core | la Web referenzia solo Core |
+| Scheda senza JavaScript | — | POST classico, poi redirect a `/?esito={id}` | ogni scheda ha un indirizzo, anche per il download |
+| Test | tabella del §5 | in più: stream dell'API letto dal client della Web (verifica il contratto SSE dai due lati), stream della Web (passi, fine, errore, API giù), Markdown uguale alla CLI | |
+
+Nota operativa: se all'avvio dell'AppHost la risorsa `api` va in `FailedToStart`, controllare che non sia rimasta attiva un'API avviata a mano sulla porta 5201.
+
 ## 7. Commit proposto (non eseguito)
 
 ```
 fase 8: API minimale e interfaccia Razor Pages per la demo, avviate da Aspire
+
+Api: endpoint per area (sistema, anagrafiche, pre-istruttoria, ricerche,
+antifrode), errori come ProblemDetails (404, 422, 503, 400), stream SSE
+dei passi della pre-istruttoria, Markdown della scheda, warm-up dei modelli,
+OpenAPI e Api.http. ConsultazioneRepository per polizze, riparatori,
+clausola, sinistro e statistiche del dataset; contratti API/UI in Core.
+Web: pagine Pre-istruttoria (scenari 1-4, passi in streaming, scheda con
+articoli che aprono il testo della clausola, antifrode, statistiche, tempi,
+link alla traccia, download Markdown), Clausole, Storico, Sinistro,
+Antifrode con precision/recall, Stato; indicatore di stato nel layout.
+Due client HTTP: letture con il resilience handler, pre-istruttoria e
+fraud-scan senza retry e con timeout di 5 minuti.
+
+Verifica: build della solution, 146 test verdi, demo sotto l'AppHost con
+DB e Ollama reali e con Ollama simulato irraggiungibile.
 ```

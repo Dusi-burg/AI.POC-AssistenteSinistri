@@ -1,33 +1,97 @@
 @page
 @model IndexModel
 @{
-    ViewData["Title"] = "Stato";
+    ViewData["Title"] = "Pre-istruttoria";
 }
 
-<h1 class="h3 mb-3">Assistente pre-istruttoria sinistri</h1>
-<p class="text-muted">Stato dei componenti della demo: SQL Server 2025, Ollama, modelli di chat e di embedding.</p>
+<div class="d-flex flex-wrap align-items-baseline justify-content-between gap-2 mb-3">
+    <h1 class="h3 mb-0">Pre-istruttoria di un sinistro</h1>
+    <div class="d-flex flex-wrap gap-2" aria-label="Scenari demo">
+        @foreach (var scenario in Model.Scenari)
+        {
+            <a class="btn btn-outline-secondary btn-sm" asp-page="/Index" asp-route-scenario="@scenario.Numero" title="@scenario.Testo">Scenario @scenario.Numero</a>
+        }
+    </div>
+</div>
 
-@if (Model.ApiError is { } error)
+@if (Model.AvvisoApi is { } avviso)
 {
-    <div class="alert alert-danger">API non raggiungibile: @error</div>
+    <div class="alert alert-warning">@avviso</div>
 }
-else if (Model.Report is { } report)
+
+<form method="post" id="form-pre-istruttoria" class="card card-body mb-4" data-stream="@PreIstruttoriaStreamEndpoint.Percorso">
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label asp-for="Modulo.NumeroPolizza" class="form-label"></label>
+            <input asp-for="Modulo.NumeroPolizza" class="form-control" list="polizze" autocomplete="off" placeholder="CF-DEMO-000001" />
+            <datalist id="polizze">
+                @foreach (var polizza in Model.Polizze)
+                {
+                    <option value="@polizza.Numero">@(polizza.Demo ? "demo · " : "")@polizza.Contraente (@polizza.Provincia) · @polizza.Prodotto.Descrizione()</option>
+                }
+            </datalist>
+            <span asp-validation-for="Modulo.NumeroPolizza" class="text-danger small"></span>
+        </div>
+        <div class="col-md-2">
+            <label asp-for="Modulo.DataEvento" class="form-label"></label>
+            <input asp-for="Modulo.DataEvento" type="date" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Modulo.Causa" class="form-label"></label>
+            <select asp-for="Modulo.Causa" class="form-select">
+                <option value="">(non indicata)</option>
+                @foreach (var gruppo in IndexModel.CausePerProdotto())
+                {
+                    <optgroup label="@gruppo.Key.Descrizione()">
+                        @foreach (var causa in gruppo)
+                        {
+                            <option value="@causa">@causa.Descrizione()</option>
+                        }
+                    </optgroup>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Modulo.RiparatoreId" class="form-label"></label>
+            <select asp-for="Modulo.RiparatoreId" class="form-select">
+                <option value="">(nessuno)</option>
+                @foreach (var riparatore in Model.Riparatori)
+                {
+                    <option value="@riparatore.Id">@riparatore.RagioneSociale</option>
+                }
+            </select>
+        </div>
+        <div class="col-12">
+            <label asp-for="Modulo.Denuncia" class="form-label"></label>
+            <textarea asp-for="Modulo.Denuncia" class="form-control" rows="3" placeholder="Testo della denuncia, come l'ha scritto il cliente."></textarea>
+            <span asp-validation-for="Modulo.Denuncia" class="text-danger small"></span>
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-3 mt-3">
+        <button type="submit" class="btn btn-primary" id="genera">Genera scheda</button>
+        <span class="text-muted small">Modello locale: la generazione richiede 15–40 secondi.</span>
+    </div>
+
+    <div id="avanzamento" class="mt-3" hidden>
+        <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <strong>Generazione in corso</strong> <span id="avanzamento-tempo" class="text-muted">0 s</span>
+        </div>
+        <ol id="avanzamento-passi" class="list-unstyled small mb-0"></ol>
+    </div>
+</form>
+
+@if (Model.Errore is { } errore)
 {
-    <table class="table table-sm align-middle">
-        <thead>
-            <tr><th>#</th><th>Controllo</th><th>Esito</th><th class="text-end">Durata</th><th>Dettaglio</th></tr>
-        </thead>
-        <tbody>
-            @foreach (var controllo in report.Controlli)
-            {
-                <tr>
-                    <td>@controllo.Numero</td>
-                    <td>@controllo.Nome</td>
-                    <td><span class="badge @IndexModel.BadgeClass(controllo.Stato)">@controllo.Stato</span></td>
-                    <td class="text-end">@controllo.Durata.TotalMilliseconds.ToString("0") ms</td>
-                    <td>@controllo.Dettaglio</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="alert alert-danger" id="errore">@errore</div>
+}
+<div class="alert alert-danger" id="errore-stream" hidden></div>
+
+@if (Model.Esito is { } esito)
+{
+    <partial name="_EsitoPreIstruttoria" model="esito" />
+}
+
+@section Scripts {
+    <script src="~/js/pre-istruttoria.js" asp-append-version="true"></script>
 }

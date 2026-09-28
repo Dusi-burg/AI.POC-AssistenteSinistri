@@ -1,7 +1,10 @@
 using Dusiburg.AI.Sinistri.Ai;
+using Dusiburg.AI.Sinistri.Api.Endpoints;
 using Dusiburg.AI.Sinistri.Api.Health;
+using Dusiburg.AI.Sinistri.Api.Problemi;
+using Dusiburg.AI.Sinistri.Api.Warmup;
 using Dusiburg.AI.Sinistri.Core;
-using Dusiburg.AI.Sinistri.Core.Health;
+using Dusiburg.AI.Sinistri.Core.Consultazione;
 using Dusiburg.AI.Sinistri.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,19 +19,27 @@ builder.Services.AddSinistriAi(builder.Configuration);
 builder.Services.AddSingleton<HealthReportCache>();
 builder.Services.AddHealthChecks().AddCheck<SinistriHealthCheck>(SinistriHealthCheck.Name);
 
+// JSON camelCase con enum come stringhe, uguale al client della Web (SinistriJson); errori come ProblemDetails (fase-8.md §2).
+builder.Services.ConfigureHttpJsonOptions(options => SinistriJson.Configura(options.SerializerOptions));
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<SinistriExceptionHandler>();
+builder.Services.AddOpenApi();
+builder.Services.AddHostedService<WarmupService>();
+
 var app = builder.Build();
 
+app.UseExceptionHandler();
+
 app.MapDefaultEndpoints();
+app.MapOpenApi();
 
-app.MapGet("/", () => new { service = "Dusiburg.AI.Sinistri.Api", phase = 1 });
+app.MapGet("/", () => new { service = "Dusiburg.AI.Sinistri.Api", phase = 8, openApi = "/openapi/v1.json" }).ExcludeFromDescription();
 
-// Esito dettagliato dei controlli, per la UI (Fase 8) e per la diagnostica durante la demo.
-app.MapGet("/api/health", async (HealthReportCache cache, CancellationToken cancellationToken) =>
-{
-    ProbeReport report = await cache.GetAsync(cancellationToken);
-
-    return Results.Ok(report);
-});
+app.MapSistemaEndpoints();
+app.MapPolizzaEndpoints();
+app.MapPreIstruttoriaEndpoints();
+app.MapRicercaEndpoints();
+app.MapAntifrodeEndpoints();
 
 app.LogConnectionStringPresence(SqlConnectionFactory.ConnectionStringName);
 

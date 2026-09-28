@@ -84,8 +84,8 @@ Tutte le istruzioni sono protette (`IF OBJECT_ID(...) IS NULL`, `IF NOT EXISTS (
 -- Lookup (righe inserite dalla CLI a partire dagli enum, vedi §4)
 CREATE TABLE dbo.Prodotto (
   Id TINYINT NOT NULL CONSTRAINT PK_Prodotto PRIMARY KEY,
-  Name NVARCHAR(50) NOT NULL CONSTRAINT UQ_Prodotto_Name UNIQUE,
-  Descrizione NVARCHAR(100) NOT NULL
+  Name VARCHAR(50) NOT NULL CONSTRAINT UQ_Prodotto_Name UNIQUE,
+  Descrizione VARCHAR(100) NOT NULL
 );
 CREATE TABLE dbo.TipoClausola (   /* stessa forma */ );
 CREATE TABLE dbo.CausaSinistro (  /* stessa forma */ );
@@ -100,7 +100,7 @@ CREATE TABLE dbo.Contraente (
 
 CREATE TABLE dbo.Polizza (
   Id INT IDENTITY CONSTRAINT PK_Polizza PRIMARY KEY,
-  Numero NVARCHAR(30) NOT NULL CONSTRAINT UQ_Polizza_Numero UNIQUE,
+  Numero VARCHAR(30) NOT NULL CONSTRAINT UQ_Polizza_Numero UNIQUE,
   ProdottoId TINYINT NOT NULL CONSTRAINT FK_Polizza_Prodotto REFERENCES dbo.Prodotto(Id),
   ContraenteId INT NOT NULL CONSTRAINT FK_Polizza_Contraente REFERENCES dbo.Contraente(Id),
   Decorrenza DATE NOT NULL,
@@ -128,7 +128,7 @@ CREATE TABLE dbo.Riparatore (
 
 CREATE TABLE dbo.Sinistro (
   Id INT IDENTITY CONSTRAINT PK_Sinistro PRIMARY KEY,
-  Numero NVARCHAR(20) NOT NULL CONSTRAINT UQ_Sinistro_Numero UNIQUE,   -- 'SIN-2025-000123'
+  Numero VARCHAR(30) NOT NULL CONSTRAINT UQ_Sinistro_Numero UNIQUE,   -- 'SIN-2025-000123'
   PolizzaId INT NOT NULL CONSTRAINT FK_Sinistro_Polizza REFERENCES dbo.Polizza(Id),
   RiparatoreId INT NULL CONSTRAINT FK_Sinistro_Riparatore REFERENCES dbo.Riparatore(Id),
   DataEvento DATE NOT NULL,
@@ -151,7 +151,7 @@ CREATE INDEX IX_Sinistro_PolizzaId ON dbo.Sinistro (PolizzaId);   -- join verso 
 -- Metadati dell'ultimo calcolo degli embedding (scritta in Fase 4, letta da health)
 CREATE TABLE dbo.EmbeddingInfo (
   Id TINYINT NOT NULL CONSTRAINT PK_EmbeddingInfo PRIMARY KEY CONSTRAINT CK_EmbeddingInfo_Singleton CHECK (Id = 1),
-  Modello NVARCHAR(100) NOT NULL,
+  Modello VARCHAR(100) NOT NULL,
   EmbeddingProviderId TINYINT NOT NULL CONSTRAINT FK_EmbeddingInfo_EmbeddingProvider REFERENCES dbo.EmbeddingProvider(Id),
   Dimensioni INT NOT NULL,
   AggiornatoIl DATETIME2(0) NOT NULL
@@ -162,13 +162,14 @@ Note di progetto:
 - **Indici:** con ~400 sinistri e ~60 clausole la ricerca vettoriale esatta è una scansione completa ed è istantanea. `IX_Sinistro_Filtri` serve per i filtri SQL della ricerca ibrida (stato + data); `IX_Sinistro_PolizzaId` per la join. Non si aggiunge un indice vettoriale (DiskANN è la Fase 10).
 - **`EmbeddingInfo`** (aggiunta rispetto al piano): registra con quale modello e quale runtime sono stati calcolati i vettori. Senza questa informazione, cambiando modello o runtime (es. lo stesso EmbeddingGemma su CPU con Ollama e su NPU con FastFlowLM) a parità di dimensione, si confronterebbero vettori di modelli diversi senza accorgersene. `health` la confronta con la configurazione.
 - `Sinistro.Provincia` resta `CHAR(2)` (sigla libera, non un enum di codice).
+- **`VARCHAR` vs `NVARCHAR`:** codici e nomi tecnici (`Numero` di polizza e sinistro, `Name`/`Descrizione` delle lookup, `EmbeddingInfo.Modello`) sono `VARCHAR`; i testi liberi (nominativi, titoli, descrizioni, perizie) restano `NVARCHAR`. Le query Dapper che filtrano su una colonna `VARCHAR` passano il parametro come `DbString { IsAnsi = true, Length = … }`: con la collation `SQL_Latin1_General_CP1_CI_AS` un parametro `NVARCHAR` forza la conversione della colonna e trasforma la seek sull'indice univoco (es. `UQ_Polizza_Numero`, `UQ_Sinistro_Numero`) in una scansione.
 
 ---
 
 ## 3. Template SQL e dimensione del vettore
 
 Gli script usano le **variabili sqlcmd** `$(DatabaseName)` e `$(EmbeddingDimensions)`. Così:
-- da riga di comando si eseguono con `sqlcmd -S "(localdb)\localdev" -E -i db\002_schema.sql -v EmbeddingDimensions=1024 -d Sinistri`;
+- da riga di comando si eseguono con `sqlcmd -S "(localdb)\localdev" -E -f 65001 -i db\002_schema.sql -v EmbeddingDimensions=768 -d Sinistri` (`-f 65001`: gli script sono UTF-8);
 - dal codice `SqlScriptRunner` (Data) legge il file, sostituisce `$(Nome)` con i valori di configurazione (solo interi validati e nomi di DB che rispettano la regex `^[A-Za-z0-9_]+$`, per evitare SQL injection), divide sui separatori `GO` e manda i batch in sequenza.
 
 Gli script sono file incorporati nell'assembly `Data` (`EmbeddedResource`), così `DbInit` e i test li trovano senza dipendere dalla cartella di lavoro.
@@ -204,7 +205,7 @@ dotnet run --project tools/Dusiburg.AI.Sinistri.DbInit [-- "<connection string>"
 | 4. Create + schema | `001_create_database.sql`, poi `002_schema.sql` con `EmbeddingDimensions` = `EMBEDDING_DIMENSIONS` (ambiente, altrimenti default delle opzioni) |
 | 5. Lookup | `SyncLookupsAsync` dai 5 enum |
 | 6. Seed (se non c'è `--no-seed`) | clausole (`003_seed_clausole.sql`) e dati sintetici (`fase-3.md`); `--parafrasa-con-llm` attiva la parafrasi via Ollama |
-| 7. Riepilogo | *"Fatto: database Sinistri ricreato con VECTOR(1024), lookup popolate dagli enum, 60 clausole, 410 sinistri. Embedding da calcolare: dotnet run --project src/Dusiburg.AI.Sinistri.Cli -- embed"* |
+| 7. Riepilogo | *"Fatto: database Sinistri ricreato con VECTOR(768), lookup popolate dagli enum, 60 clausole, 410 sinistri. Embedding da calcolare: dotnet run --project src/Dusiburg.AI.Sinistri.Cli -- embed"* |
 
 Il seed **non** calcola gli embedding: servono Ollama e qualche minuto, quindi restano un passo separato della CLI (`fase-4.md`). Così `DbInit` è veloce, deterministico e usabile anche dai test senza Ollama.
 
@@ -214,7 +215,7 @@ La classe che fa il lavoro, `DatabaseInitializer.RecreateAsync(connectionString,
 
 ### Lettura della dimensione delle colonne
 
-`DatabaseInitializer.ReadVectorDimensionsAsync()` legge la dimensione di `Clausola.Embedding` e `Sinistro.Embedding` dai metadati di sistema. In fase di sviluppo va verificata la colonna esatta di `sys.columns` che espone la dimensione (es. `vector_dimensions`); in alternativa `max_length`, meno l'header, diviso 4. Serve al controllo 9 di `health`: se la configurazione chiede 1024 e il DB ha 768 → *"Il database ha VECTOR(768) ma EMBEDDING_DIMENSIONS è 1024: rieseguire DbInit."*
+`DatabaseInitializer.ReadVectorDimensionsAsync()` legge la dimensione di `Clausola.Embedding` e `Sinistro.Embedding` dai metadati di sistema. In fase di sviluppo va verificata la colonna esatta di `sys.columns` che espone la dimensione (es. `vector_dimensions`); in alternativa `max_length`, meno l'header, diviso 4. Serve al controllo 9 di `health`: se la configurazione chiede 768 e il DB ha 1024 → *"Il database ha VECTOR(1024) ma EMBEDDING_DIMENSIONS è 768: rieseguire DbInit."*
 
 Classi coinvolte: `DatabaseInitializer`, `SqlScriptRunner` (Data), `Program.cs` di `DbInit`.
 
@@ -240,8 +241,35 @@ I test di integrazione hanno la categoria `[Category("Integration")]` e ricreano
 - `health` mostra ora anche il controllo 4 (DB presente) e il 9 (dimensione colonne) **OK**.
 - Build della solution e test verdi.
 
+## 7 bis. Esito (2026-09-25)
+
+Criteri di completamento verificati:
+- `DbInit -- --no-seed` crea `Sinistri` con 11 tabelle, `IX_Sinistro_Filtri`, `IX_Sinistro_PolizzaId` e le 5 lookup (2 prodotti, 4 tipi di clausola, 11 cause, 3 stati, 3 provider). Rieseguito riparte da zero;
+- con `Server=sqlprod01` e senza `--allow-non-local`: rifiuto con codice 1. Con `EMBEDDING_DIMENSIONS=abc`: messaggio di configurazione non valida, codice 1;
+- `health`: controlli 1–9 OK, con esito globale "OK". Con `EMBEDDING_DIMENSIONS=1024` il controllo 9 fallisce: *"il database ha Clausola.Embedding VECTOR(768), Sinistro.Embedding VECTOR(768) ma EMBEDDING_DIMENSIONS=1024: rieseguire DbInit"*;
+- build della solution senza warning; 57 test verdi, compresi quelli di integrazione su `Sinistri_Test`.
+
+Scostamenti:
+
+| Punto | Previsto | Fatto | Motivo |
+|---|---|---|---|
+| Firma dell'inizializzatore | `RecreateAsync(connectionString, embeddingDimensions, seed)` | `RecreateAsync(connectionString, embeddingDimensions, cancellationToken)`: schema e lookup | il seed arriva con la Fase 3 e sarà un passo separato di `DbInit`, come in O2C; `--no-seed` è già accettato |
+| Dimensione delle colonne | colonna di `sys.columns` da verificare | `sys.columns.vector_dimensions` (SQL Server 2025, verificato su LocalDB) | — |
+| Controllo 9 di `health` | dimensione delle colonne | dimensione **e** `EmbeddingInfo` (modello, provider, dimensione) contro la configurazione; senza embedding calcolati è OK con la nota "comando embed, Fase 4" | un modello diverso a parità di dimensione darebbe vettori incompatibili senza errori |
+| Metadati degli enum | — | `EnumMetadata` in Core: `Descrizione()`, `ProdottoDellaCausa()`, `Cause()`, mappa da `EMBEDDING_PROVIDER` all'enum `EmbeddingProvider` | usati da lookup, health e dalle fasi 3 e 8 |
+| `--parafrasa-con-llm` | opzione di `DbInit` | non ancora | riguarda il seed (Fase 3) |
+
 ## 8. Commit proposto (non eseguito)
 
 ```
 fase 2: schema database con tabelle di lookup e tool DbInit
+
+Script db/001_create_database.sql e db/002_schema.sql con variabili sqlcmd,
+incorporati nell'assembly Data ed eseguiti da SqlScriptRunner (split su GO,
+variabili validate). DatabaseInitializer ricrea il database da zero come in O2C
+e popola le lookup dagli enum di dominio. Tool DbInit con protezione LocalDB.
+health: controllo 9 su dimensione delle colonne VECTOR ed EmbeddingInfo.
+
+Verifica: build della solution, 57 test verdi (integrazione su Sinistri_Test
+con VECTOR(4)), DbInit rieseguibile, health OK con VECTOR(768).
 ```

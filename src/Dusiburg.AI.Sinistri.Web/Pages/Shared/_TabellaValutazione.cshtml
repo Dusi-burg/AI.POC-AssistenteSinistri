@@ -1,0 +1,20 @@
+@model Dusiburg.AI.Sinistri.Web.Pages.Antifrode.TabellaValutazioneVista
+<h3 class="h6">@Model.Titolo</h3>
+<table class="table table-sm small">
+    <thead><tr><th>Soglia</th><th class="text-end">Trovate</th><th class="text-end">TP</th><th class="text-end">FP</th><th class="text-end">FN</th><th class="text-end">Precision</th><th class="text-end">Recall</th><th class="text-end">F1</th></tr></thead>
+    <tbody>
+        @foreach (var riga in Model.Righe)
+        {
+            <tr class="@(riga == Model.Suggerita ? "table-success" : "")" title="@(riga == Model.Suggerita ? "soglia suggerita" : "")">
+                <td>@SinistriPresentation.Distanza(riga.Soglia)@(riga == Model.Suggerita ? " ←" : "")</td>
+                <td class="text-end">@riga.Trovate</td>
+                <td class="text-end">@riga.VeriPositivi</td>
+                <td class="text-end">@riga.FalsiPositivi</td>
+                <td class="text-end">@riga.FalsiNegativi</td>
+                <td class="text-end">@SinistriPresentation.Decimale(riga.Precision)</td>
+                <td class="text-end">@SinistriPresentation.Decimale(riga.Recall)</td>
+                <td class="text-end">@SinistriPresentation.Decimale(riga.F1)</td>
+            </tr>
+        }
+    </tbody>
+</table>

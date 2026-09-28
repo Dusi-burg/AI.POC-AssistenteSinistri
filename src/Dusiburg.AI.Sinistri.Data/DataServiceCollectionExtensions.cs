@@ -1,4 +1,13 @@
+using Dusiburg.AI.Sinistri.Core.Antifrode;
+using Dusiburg.AI.Sinistri.Core.Consultazione;
 using Dusiburg.AI.Sinistri.Core.Health;
+using Dusiburg.AI.Sinistri.Core.PreIstruttoria;
+using Dusiburg.AI.Sinistri.Core.Retrieval;
+using Dusiburg.AI.Sinistri.Data.Antifrode;
+using Dusiburg.AI.Sinistri.Data.Consultazione;
+using Dusiburg.AI.Sinistri.Data.PreIstruttoria;
+using Dusiburg.AI.Sinistri.Data.Embedding;
+using Dusiburg.AI.Sinistri.Data.Retrieval;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -11,6 +20,12 @@ public static class DataServiceCollectionExtensions
     {
         services.AddSingleton(new SqlConnectionFactory(configuration.GetConnectionString(SqlConnectionFactory.ConnectionStringName)));
         services.AddSingleton<IHealthProbe, SqlHealthProbe>();
+        services.AddSingleton<EmbeddingRepository>();
+        services.AddSingleton<IClausolaRepository, ClausolaRepository>();
+        services.AddSingleton<ISinistroRepository, SinistroRepository>();
+        services.AddSingleton<IPolizzaRepository, PolizzaRepository>();
+        services.AddSingleton<IAntifrodeRepository, AntifrodeRepository>();
+        services.AddSingleton<IConsultazioneRepository, ConsultazioneRepository>();
 
         return services;
     }

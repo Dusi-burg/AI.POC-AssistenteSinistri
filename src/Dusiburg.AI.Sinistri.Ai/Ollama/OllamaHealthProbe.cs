@@ -44,7 +44,7 @@ public sealed class OllamaHealthProbe(SinistriOptions options, EmbeddingGenerato
         }
 
         IReadOnlyList<Model> installed = [.. await ollama.ListLocalModelsAsync(cancellationToken)];
-        ProbeResult embeddingPresente = await ProbeResult.MeasureAsync(7, EmbeddingNome, () => Task.FromResult(CheckEmbeddingModel(installed)));
+        ProbeResult embeddingPresente = await ProbeResult.MeasureAsync(7, EmbeddingNome, () => CheckEmbeddingModelAsync(installed, cancellationToken));
 
         return
         [
@@ -58,9 +58,29 @@ public sealed class OllamaHealthProbe(SinistriOptions options, EmbeddingGenerato
         ];
     }
 
-    private (ProbeStatus, string) CheckEmbeddingModel(IReadOnlyList<Model> installed) => options.EmbeddingProvider == EmbeddingProviders.Ollama
-        ? CheckInstalled(installed, options.EmbeddingModel)
-        : (ProbeStatus.Error, $"{SinistriOptions.Keys.EmbeddingProvider}={options.EmbeddingProvider}: controllo disponibile dalla Fase 1b");
+    private async Task<(ProbeStatus, string)> CheckEmbeddingModelAsync(IReadOnlyList<Model> installed, CancellationToken cancellationToken) =>
+        options.EmbeddingProvider switch
+        {
+            EmbeddingProviders.Ollama => CheckInstalled(installed, options.EmbeddingModel),
+            EmbeddingProviders.OpenAiCompatible => await CheckServedModelAsync(cancellationToken),
+            _ => (ProbeStatus.Error, $"{SinistriOptions.Keys.EmbeddingProvider}={options.EmbeddingProvider}: non ancora disponibile nell'applicazione")
+        };
+
+    /// <summary>
+    /// Server raggiungibile (<c>GET {endpoint}/models</c>). Il modello non si cerca nell'elenco: FastFlowLM vi mostra il catalogo
+    /// dei modelli di chat e non quello di embedding caricato con <c>--embed 1</c>. La prova reale è il controllo 8.
+    /// </summary>
+    private async Task<(ProbeStatus, string)> CheckServedModelAsync(CancellationToken cancellationToken)
+    {
+        using var http = new HttpClient { Timeout = OllamaClients.ProbeTimeout };
+        Uri models = new(options.EmbeddingEndpoint.AbsoluteUri.TrimEnd('/') + "/models");
+
+        using HttpResponseMessage response = await http.GetAsync(models, cancellationToken);
+
+        return response.IsSuccessStatusCode
+            ? (ProbeStatus.Ok, $"server {options.EmbeddingEndpoint} raggiungibile; '{options.EmbeddingModel}' verificato dal controllo 8")
+            : (ProbeStatus.Error, $"{models} ha risposto {(int)response.StatusCode}");
+    }
 
     private static (ProbeStatus, string) CheckInstalled(IReadOnlyList<Model> installed, string model) =>
         installed.FirstOrDefault(m => OllamaClients.SameModel(m.Name, model)) is { } found

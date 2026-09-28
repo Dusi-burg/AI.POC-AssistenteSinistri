@@ -21,7 +21,13 @@ internal static class SinistriCli
         var root = new RootCommand("Assistente pre-istruttoria sinistri: RAG locale con SQL Server 2025 e Ollama.")
         {
             verbose,
-            HealthCommand.Create(services)
+            HealthCommand.Create(services),
+            EmbedCommand.Create(services),
+            SearchCommands.Clausole(services),
+            SearchCommands.Sinistri(services),
+            AskCommand.Create(services),
+            FraudScanCommand.Create(services),
+            EvalCommand.Create(services)
         };
 
         return await root.Parse(args).InvokeAsync();

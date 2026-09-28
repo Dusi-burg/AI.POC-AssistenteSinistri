@@ -1,0 +1,116 @@
+@page
+@model Dusiburg.AI.Sinistri.Web.Pages.Antifrode.IndexModel
+@{
+    ViewData["Title"] = "Antifrode";
+    RisultatoFraudScan? risultato = Model.Risultato;
+}
+
+<div class="d-flex flex-wrap align-items-baseline justify-content-between gap-2">
+    <h1 class="h3">Antifrode <span class="text-muted h6">quasi-duplicati tra i sinistri denunciati</span></h1>
+    <a class="btn btn-outline-secondary btn-sm" asp-page="/Antifrode/Index" asp-route-scenario="@Model.Scenario6.Numero" title="@Model.Scenario6.Testo">Scenario @Model.Scenario6.Numero</a>
+</div>
+<p class="text-muted">Coppie di sinistri con testo quasi uguale (distanza coseno sotto soglia) denunciati nel periodo. Il motivo dice se
+    hanno lo stesso contraente o lo stesso riparatore; le coppie con il solo testo simile sono per lo più descrizioni ripetute dai
+    template dei dati sintetici.</p>
+
+<form method="get" class="card card-body mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-2">
+            <label asp-for="Mesi" class="form-label">Mesi</label>
+            <input asp-for="Mesi" type="number" min="1" max="120" class="form-control" placeholder="12" />
+        </div>
+        <div class="col-md-2">
+            <label asp-for="Soglia" class="form-label">Soglia</label>
+            <input asp-for="Soglia" type="number" min="0.01" max="2" step="0.01" class="form-control" placeholder="predefinita" />
+        </div>
+        <div class="col-md-5">
+            <div class="form-check">
+                <input asp-for="SoloTesto" class="form-check-input" />
+                <label asp-for="SoloTesto" class="form-check-label">mostra le coppie con il solo testo simile</label>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary w-100">Cerca coppie</button>
+        </div>
+    </div>
+</form>
+
+@if (Model.Errore is { } errore)
+{
+    <div class="alert alert-danger">@errore</div>
+}
+
+@if (risultato is not null)
+{
+    int conLegame = risultato.Coppie.Count(c => c.ConLegame);
+
+    <p>Ultimi @risultato.Mesi mesi, soglia <strong>@SinistriPresentation.Distanza(risultato.Soglia)</strong>: @risultato.Coppie.Count coppie,
+        di cui <strong>@conLegame con stesso contraente o riparatore</strong> e @(risultato.Coppie.Count - conLegame) con il solo testo simile
+        <span class="text-muted small">(@SinistriPresentation.Secondi(risultato.Durata))</span>.</p>
+
+    <div class="table-responsive">
+        <table class="table table-sm align-middle small">
+            <thead>
+                <tr>
+                    @if (risultato.Valutazione is not null) { <th title="coppia attesa dal seed">Attesa</th> }
+                    <th>Sinistro A</th><th>Sinistro B</th><th class="text-end">Distanza</th><th>Motivo</th><th class="text-end">Giorni</th>
+                    <th>Descrizione A</th><th>Descrizione B</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var coppia in Model.CoppieMostrate)
+                {
+                    <tr>
+                        @if (risultato.Valutazione is not null) { <td class="text-success fw-bold">@(Model.Attesa(coppia) ? "✓" : "")</td> }
+                        <td class="text-nowrap"><a asp-page="/Sinistri/Dettaglio" asp-route-numero="@coppia.NumeroA">@coppia.NumeroA</a></td>
+                        <td class="text-nowrap"><a asp-page="/Sinistri/Dettaglio" asp-route-numero="@coppia.NumeroB">@coppia.NumeroB</a></td>
+                        <td class="text-end">@SinistriPresentation.Distanza(coppia.Distanza)</td>
+                        <td>@coppia.Motivo.Descrizione()</td>
+                        <td class="text-end">@coppia.GiorniTraDenunce</td>
+                        <td class="descrizione-affiancata">@coppia.DescrizioneA</td>
+                        <td class="descrizione-affiancata">@coppia.DescrizioneB</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (risultato.Valutazione is { } valutazione)
+    {
+        <h2 class="h5 mt-4">Valutazione rispetto alle coppie attese</h2>
+        <p class="text-muted small">Le @valutazione.DistanzeAttese.Count coppie di quasi-duplicati inserite dal generatore dei dati sintetici
+            (<code>data/duplicati_attesi.json</code>). Soglia suggerita: la più bassa con recall ≥ @SinistriPresentation.Decimale(ValutazioneDuplicati.RecallMinima).</p>
+
+        <div class="row g-3">
+            <div class="col-lg-6">
+                @await Html.PartialAsync("_TabellaValutazione", new Dusiburg.AI.Sinistri.Web.Pages.Antifrode.TabellaValutazioneVista("Tutte le coppie", valutazione.Tutte, valutazione.SuggeritaTutte))
+            </div>
+            <div class="col-lg-6">
+                @await Html.PartialAsync("_TabellaValutazione", new Dusiburg.AI.Sinistri.Web.Pages.Antifrode.TabellaValutazioneVista("Solo coppie con stesso contraente o riparatore", valutazione.ConLegame, valutazione.SuggeritaConLegame))
+            </div>
+        </div>
+
+        @if (ValutazioneDuplicati.Distribuzione(valutazione.DistanzeAttese.Where(d => d.Distanza is not null).Select(d => d.Distanza!.Value)) is { } distribuzione)
+        {
+            <p class="small">Distanze delle coppie attese: min @SinistriPresentation.Distanza(distribuzione.Min) · mediana @SinistriPresentation.Distanza(distribuzione.Mediana)
+                · max @SinistriPresentation.Distanza(distribuzione.Max).
+                @if (valutazione.NonAttesaConLegamePiuVicina is { } vicina)
+                {
+                    <text>Coppia non attesa più vicina con un legame: @vicina.NumeroA ↔ @vicina.NumeroB a @SinistriPresentation.Distanza(vicina.Distanza).</text>
+                }
+            </p>
+        }
+
+        var mancanti = valutazione.DistanzeAttese.Where(a => !a.InPeriodo || a.Distanza is not { } x || x >= risultato.Soglia).ToList();
+        @if (mancanti.Count > 0)
+        {
+            <p class="small mb-1">Coppie attese non trovate alla soglia @SinistriPresentation.Distanza(risultato.Soglia):</p>
+            <ul class="small">
+                @foreach (var mancante in mancanti)
+                {
+                    <li>@mancante.Coppia.Originale ↔ @mancante.Coppia.Duplicato — distanza @(mancante.Distanza is { } d ? SinistriPresentation.Distanza(d) : "n.d.")@(mancante.InPeriodo ? "" : " · fuori periodo")</li>
+                }
+            </ul>
+        }
+    }
+}

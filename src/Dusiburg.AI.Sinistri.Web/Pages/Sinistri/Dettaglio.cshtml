@@ -1,0 +1,46 @@
+@page
+@model Dusiburg.AI.Sinistri.Web.Pages.Sinistri.DettaglioModel
+@{
+    ViewData["Title"] = Model.Sinistro?.Numero ?? "Sinistro";
+}
+
+@if (Model.Errore is { } errore)
+{
+    <div class="alert alert-danger">@errore</div>
+}
+
+@if (Model.Sinistro is { } s)
+{
+    <div class="d-flex align-items-baseline gap-3 mb-3">
+        <h1 class="h3 mb-0">@s.Numero</h1>
+        <span class="badge @SinistriPresentation.StatoSinistroClass(s.Stato)">@s.Stato</span>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-body small">
+                    <dl class="row mb-0">
+                        <dt class="col-5">Polizza</dt><dd class="col-7">@s.NumeroPolizza · @s.Prodotto.Descrizione()</dd>
+                        <dt class="col-5">Contraente</dt><dd class="col-7">@s.Contraente</dd>
+                        <dt class="col-5">Riparatore</dt><dd class="col-7">@(s.Riparatore ?? "—")</dd>
+                        <dt class="col-5">Data evento</dt><dd class="col-7">@s.DataEvento.ToString("dd/MM/yyyy")</dd>
+                        <dt class="col-5">Data denuncia</dt><dd class="col-7">@s.DataDenuncia.ToString("dd/MM/yyyy")</dd>
+                        <dt class="col-5">Provincia</dt><dd class="col-7">@s.Provincia</dd>
+                        <dt class="col-5">Causa</dt><dd class="col-7">@s.Causa.Descrizione()</dd>
+                        <dt class="col-5">Riservato</dt><dd class="col-7">@SinistriPresentation.Euro(s.ImportoRiservato)</dd>
+                        <dt class="col-5">Liquidato</dt><dd class="col-7">@SinistriPresentation.Euro(s.ImportoLiquidato)</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <h2 class="h6">Descrizione</h2>
+            <p>@s.Descrizione</p>
+            <h2 class="h6">Esito di perizia</h2>
+            <p>@(s.EsitoPerizia ?? "Non ancora disponibile (sinistro aperto).")</p>
+        </div>
+    </div>
+}
+
+<p class="mt-3"><a href="javascript:history.back()">← indietro</a></p>

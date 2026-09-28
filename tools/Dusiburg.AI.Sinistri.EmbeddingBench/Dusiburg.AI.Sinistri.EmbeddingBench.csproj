@@ -4,7 +4,17 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <!-- Windows ML (ONNX Runtime + execution provider della NPU dal catalogo di Windows) richiede un TFM Windows -->
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <WindowsPackageType>None</WindowsPackageType>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Self-contained: runtime di Windows ML nella cartella del tool, nessuna installazione di sistema -->
+    <PackageReference Include="Microsoft.Windows.AI.MachineLearning" />
+    <PackageReference Include="Microsoft.ML.Tokenizers" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Dusiburg.AI.Sinistri.Core\Dusiburg.AI.Sinistri.Core.csproj" />
