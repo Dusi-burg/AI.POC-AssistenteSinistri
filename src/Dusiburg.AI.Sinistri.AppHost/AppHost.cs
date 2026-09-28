@@ -27,9 +27,15 @@ api.WithConfigurationEnvironment(
     "SINISTRI_PROMPT_CAPTURE_DIR",
     "SINISTRI_WARMUP");
 
-builder.AddProject<Projects.Dusiburg_AI_Sinistri_Web>("web")
+var web = builder.AddProject<Projects.Dusiburg_AI_Sinistri_Web>("web")
     .WithReference(api)            // service discovery: la Web chiama http://api
     .WithHttpHealthCheck("/health");
+
+// Link "apri la traccia nel dashboard" della scheda (fase-8.md §3.1): primo indirizzo del dashboard dai launchSettings dell'AppHost.
+if (builder.Configuration["ASPNETCORE_URLS"]?.Split(';', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() is { } dashboard)
+{
+    web.WithEnvironment("SINISTRI_DASHBOARD_URL", dashboard);
+}
 
 builder.Build().Run();
 

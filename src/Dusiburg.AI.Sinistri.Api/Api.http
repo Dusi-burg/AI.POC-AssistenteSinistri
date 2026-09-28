@@ -1,0 +1,90 @@
+# Richieste pronte per l'API (fase-8.md §2), come Erp.Api.http di O2C.
+# Porta fissa 5201 dai launchSettings; con l'AppHost avviato l'API risponde qui.
+@api = http://localhost:5201
+
+### Controlli dettagliati (come il comando health della CLI)
+GET {{api}}/api/health
+
+### Conteggi del dataset ed EmbeddingInfo
+GET {{api}}/api/statistiche-dataset
+
+### Modelli, soglie e parametri di retrieval in uso
+GET {{api}}/api/configurazione
+
+### Scenari demo
+GET {{api}}/api/scenari-demo
+
+### Polizze per numero o contraente (le demo per prime)
+GET {{api}}/api/polizze?cerca=bianchi&top=10
+
+### Una polizza
+GET {{api}}/api/polizze/CF-DEMO-000001
+
+### Riparatori
+GET {{api}}/api/riparatori
+
+### Pre-istruttoria, risposta unica (15-40 s)
+POST {{api}}/api/pre-istruttoria
+Content-Type: application/json
+
+{
+  "denuncia": "Rottura di un tubo nel bagno del piano superiore, danni a parquet e controsoffitto del soggiorno.",
+  "numeroPolizza": "CF-DEMO-000001"
+}
+
+### Pre-istruttoria in streaming: eventi passo, poi esito (o errore)
+POST {{api}}/api/pre-istruttoria/stream
+Content-Type: application/json
+
+{
+  "denuncia": "Dopo un temporale si è bruciata la caldaia e il televisore.",
+  "numeroPolizza": "CF-DEMO-000001",
+  "causaIndicata": "FenomenoElettrico"
+}
+
+### Polizza inesistente: 404 ProblemDetails
+POST {{api}}/api/pre-istruttoria
+Content-Type: application/json
+
+{
+  "denuncia": "Tubo rotto.",
+  "numeroPolizza": "CF-XXXX-000000"
+}
+
+### Ricerca clausole (pilastro A)
+POST {{api}}/api/clausole/ricerca
+Content-Type: application/json
+
+{
+  "testo": "Il cliente dice che la grandine ha rotto i pannelli solari sul tetto.",
+  "prodotto": "CasaFabbricati"
+}
+
+### Una clausola
+GET {{api}}/api/clausole/1
+
+### Ricerca nello storico (pilastro B, scenario 5)
+POST {{api}}/api/sinistri/ricerca
+Content-Type: application/json
+
+{
+  "testo": "sovratensione ha danneggiato il quadro elettrico e l'inverter",
+  "prodotto": "CasaFabbricati",
+  "provincia": "MI",
+  "importoMin": 5000,
+  "causa": "FenomenoElettrico"
+}
+
+### Un sinistro
+GET {{api}}/api/sinistri/SIN-2026-000024
+
+### fraud-scan sugli ultimi 12 mesi (scenario 6), con la valutazione se esiste data/duplicati_attesi.json
+POST {{api}}/api/antifrode/scan
+Content-Type: application/json
+
+{
+  "mesi": 12
+}
+
+### OpenAPI
+GET {{api}}/openapi/v1.json

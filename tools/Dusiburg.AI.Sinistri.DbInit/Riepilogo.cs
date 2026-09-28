@@ -1,4 +1,5 @@
 using Dusiburg.AI.Sinistri.Core.Dominio;
+using Dusiburg.AI.Sinistri.Core.Seed;
 using Dusiburg.AI.Sinistri.Data.Seed;
 using Microsoft.Data.SqlClient;
 

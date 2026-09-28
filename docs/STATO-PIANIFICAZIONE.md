@@ -13,10 +13,10 @@
 - **Fase 5 completata** (`fase-5.md` §8 bis): ricerca di clausole e storico, statistiche in SQL, `search-clausole` / `search-sinistri`; soglia integrativa 0,70, Art. 2.4 e 3.7 ritoccati; 5 scenari soddisfatti.
 - **Fase 6 completata, CHECKPOINT 6 superato** (`fase-6.md` §9 bis): comando `ask`, prompt rivisto al checkpoint, franchigia di base `Art. 4.1`; 4 schede in `eval/checkpoint-6` senza avvisi, 12–17 s ciascuna.
 - **Fase 7 completata** (`fase-7.md` §2 bis e §6 bis): `fraud-scan` con valutazione (9 coppie attese su 10 a 0,05, precision 0,82 sulle coppie con un legame); controllo della nuova denuncia su `Sinistro.EmbeddingAntifrode` (sola descrizione) con `SOGLIA_DUPLICATO_DENUNCIA` 0,07; `embed` ora calcola 880 vettori (31 s). Output in `eval/fase-7`.
-- Aperto per la Fase 9: includere o no l'esito di perizia nel vettore del sinistro (`fase-4.md` §2; in Fase 7 serve al fraud-scan e ostacola il confronto con la denuncia nuova); imprecisioni residue delle schede del CHECKPOINT 6 come casi del golden set (`fase-6.md` §9 bis); interventi sui template del seed per ridurre i falsi positivi del fraud-scan (`fase-7.md` §6 bis).
+- **Fase 8 completata** (`fase-8.md`, "Streaming" e §6 bis): API minimale con `ProblemDetails`, OpenAPI e `Api.http`; UI Razor Pages con pre-istruttoria a passi in streaming (SSE), articoli citati che aprono la clausola, link alla traccia nel dashboard, ricerche, antifrode, stato. Verificata sotto l'AppHost con DB e Ollama reali e con Ollama simulato irraggiungibile; 146 test verdi.
+- Aperto per la Fase 9: includere o no l'esito di perizia nel vettore del sinistro (`fase-4.md` §2; in Fase 7 serve al fraud-scan e ostacola il confronto con la denuncia nuova); imprecisioni residue delle schede del CHECKPOINT 6 come casi del golden set (`fase-6.md` §9 bis; lo scenario 4 ripete ancora l'Art. 3.7 tra le esclusioni); interventi sui template del seed per ridurre i falsi positivi del fraud-scan (`fase-7.md` §6 bis); `docs/demo.md` con le manopole (`fase-8.md` §4).
 
 ## Da fare alla ripresa
 
-1. (Utente) commit della Fase 7 con il testo di `fase-7.md` §7 (include `data/duplicati_attesi.json` rigenerato ed `eval/fase-7`).
-2. Chi usa un DB creato prima della Fase 7 deve rieseguire DbInit ed `embed`: lo schema ha la nuova colonna `EmbeddingAntifrode`.
-3. **Fase 8**: UI web (`fase-8.md`); il fraud-scan è già esposto da `AntifrodeService.ScansionaAsync`.
+1. (Utente) prova della demo nel browser (impaginazione, passi a video, apertura della traccia nel dashboard), poi commit della Fase 8 con il testo di `fase-8.md` §7.
+2. **Fase 9**: valutazione e test (`fase-9.md`).
