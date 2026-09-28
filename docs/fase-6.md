@@ -238,8 +238,85 @@ Criteri:
 
 **CHECKPOINT 6:** mostrare all'utente le 4 schede e chiedere feedback sul prompt (tono, completezza, sezioni) prima di proseguire. Le modifiche al prompt si fanno qui, non nelle fasi successive.
 
+## 9 bis. Esito (2026-09-25) — CHECKPOINT 6 superato
+
+### Seconda versione, dopo il feedback (schede attuali in `eval/checkpoint-6/`)
+
+Modifiche approvate al CHECKPOINT e applicate:
+1. **Prompt**, nuove regole 3, 4, 6 e 7 del system prompt: ogni articolo in una sola sezione e una sola volta, franchigie solo come franchigia applicabile; motivazione legata al contenuto della clausola citata; nessun calcolo con gli importi; solo le esclusioni che i fatti potrebbero rendere applicabili. La regola del formato di risposta diventa la 9.
+2. **Franchigia di base**: se nessuna franchigia è tra le clausole recuperate, la query aggiunge `Retrieval:ArticoloFranchigiaBase` (default `Art. 4.1`, "franchigia frontale" casa e "franchigia fissa" RC, stessa numerazione) come integrativa, a qualunque distanza. Vale anche per `search-clausole`. Alzare la soglia per le franchigie non bastava: nello scenario 3 la franchigia RC più vicina è la 4.4 (sottolimite coordinatore), non la 4.1.
+
+| Scenario | Tempo | Citati | Avvisi |
+|---|---|---|---|
+| 1 | 26,9 s (con caricamento del modello) | G 2.4, 2.5 · E 3.4, 3.5 · F 4.3 | nessuno |
+| 2 | 16,4 s | G 2.3, **2.2** · E 3.6 · F 4.2 · punto: estensione 2.3 richiamata e premio pagato? | nessuno |
+| 3 | 16,9 s | G 2.1, 2.6, 1.1 · E 3.5 · **F 4.1** (2.500 € di polizza) · punto: data della richiesta (1.4) | nessuno |
+| 4 | 12,4 s | G 2.6 · E 3.7 (una volta) · F 4.4 | nessuno |
+
+Risolti: 2.6 al posto della 2.2 e calcolo inventato (scenario 2), franchigia 4.1 assente (scenario 3), 4.4 tra le garanzie e 3.7 ripetuta (scenario 4). Build della solution senza warning; 123 test verdi (in più: franchigia di base nel repository delle clausole, nuove regole nel prompt).
+
+Imprecisioni residue, che la validazione non può intercettare (l'articolo esiste ed è del tipo giusto; l'importo è nelle clausole):
+- scenario 1: l'esclusione 3.5 (ristrutturazione) resta, con una circostanza da verificare formulata in modo sensato; la 3.1 attesa non è tra le clausole recuperate;
+- scenario 3: l'esclusione 3.4 (circostanze note) non è tra le clausole recuperate;
+- scenario 4: "franchigia 150 €" invece dei 250 € di polizza, che l'Art. 4.4 dice di applicare se più elevati.
+
+Sono materiale per il golden set della Fase 9.
+
+### Prima versione (prima del feedback)
+
+Schede generate su un DB di verifica (DbInit + `embed`, poi eliminato) con `qwen3.5:9b`:
+
+| Scenario | Tempo | Citati (dopo la validazione) | Atteso | Avvisi |
+|---|---|---|---|---|
+| 1 | 17,2 s | G 2.4, 2.5 · E 3.4, 3.5 · F 4.3 | G 2.4, 2.5 · E 3.1/3.4 · F 4.3 | nessuno |
+| 2 | 14,4 s | G 2.3, **2.6** · E 3.6 · F 4.2 · punto: estensione 2.3 richiamata? | G 2.2 (2.3 se richiamata) · E 3.6 · F 4.2 | importo non verificato: 210.000 € (calcolo inventato, 20% del massimale) |
+| 3 | 14,5 s | G 2.1, 2.6 · E 3.5 · F — · punti: data della richiesta (1.4), retroattività (1.5) | G 2.1, 2.6 · E 3.4, 3.5 · F 4.1 | Art. 4.1 citato ma non recuperato: rimosso |
+| 4 | 16,0 s | G 2.6, **4.4** · E 3.7 (due volte) · F 4.4 | G 2.6 · E 3.7 · F 4.4 | 4.4 tra le garanzie: tipo incoerente |
+
+Criteri:
+- JSON valido in tutte e 4 le schede al primo tentativo (nessun retry, nessun fallback). Lo schema generato dal tipo arriva a Ollama: il modello usa esattamente le chiavi camelCase, che il prompt non elenca;
+- nessuna citazione non valida sopravvissuta: l'unica (4.1 nello scenario 3) è stata rimossa e compare negli avvisi;
+- un importo inventato (scenario 2), segnalato dalla validazione;
+- tempo per scheda 14–17 s a modello caricato; la prima esecuzione, con il caricamento del modello, 27 s;
+- consumo misurato: ~2.000 token in ingresso e ~500 in uscita, sotto il budget stimato;
+- polizza inesistente e data evento fuori validità: messaggio chiaro, codice di uscita 2;
+- build della solution senza warning; 122 test verdi (17 nuovi: prompt, parser, validatore, servizio con chat finta, Markdown, polizza per numero).
+
+Osservazioni per il feedback sul prompt:
+1. **Scenario 2**: al posto dell'Art. 2.2 (Eventi atmosferici) il modello cita l'Art. 2.6 (Fenomeno elettrico) con una motivazione da eventi atmosferici. La validazione non lo intercetta, perché l'articolo esiste ed è una garanzia.
+2. **Scenario 2**: calcolo inventato (20% di 300.000 = 210.000 €) nella valutazione, intercettato come importo non verificato.
+3. **Scenario 3**: la franchigia fissa 4.1 non è tra le clausole recuperate (problema già aperto dalla Fase 5): il modello la cita comunque, e la validazione la rimuove.
+4. **Scenario 4**: la 4.4 compare anche tra le garanzie (avviso "tipo incoerente") e la 3.7 due volte, con due circostanze diverse.
+5. **Scenario 1**: esclusione 3.5 (ristrutturazione) poco pertinente; manca la 3.1 attesa, che non è tra le clausole recuperate.
+
+Scostamenti:
+
+| Punto | Previsto | Fatto | Motivo |
+|---|---|---|---|
+| Dove sta `PreIstruttoriaService` | non indicato | progetto Ai, accanto a `PromptBuilder` | usa `IChatClient`; Core resta senza dipendenze dai modelli |
+| Embedding della denuncia | per ricerca | uno solo, usato per clausole e storico | un calcolo in meno |
+| `EsitoPreIstruttoria` | campi di §1 | in più richiesta, modello e data di generazione | servono all'intestazione e alla sezione "Denuncia" del Markdown |
+| Regola 4 del system prompt | numeri solo da DATI POLIZZA e STATISTICHE | anche da CLAUSOLE | le clausole contengono importi (minimo 500 €, limite 5.000 €) che il modello deve poter riportare |
+| Importi ammessi dalla validazione | massimale, franchigia, statistiche | in più gli importi scritti nelle clausole recuperate | come sopra, altrimenti avvisi su citazioni corrette |
+| Sinistri simili nel Markdown | "5 più vicini" | tutti i `TopSinistri` (10) | le statistiche sono calcolate su questi (D11): la tabella deve corrispondere |
+| Contratti Fase 7 | — | `SegnalazioneDuplicato` e `MotivoSegnalazione` già nella forma di `fase-7.md`, lista vuota | l'esito non cambia forma in Fase 7 |
+| Avviso di retry | — | un avviso `Parsing` anche quando il secondo tentativo riesce | il criterio "al più un retry" resta verificabile dalla scheda |
+
 ## 10. Commit proposto (non eseguito)
 
 ```
 fase 6: generazione della scheda di pre-istruttoria con validazione delle citazioni
+
+PreIstruttoriaService (Ai): polizza, embedding della denuncia, clausole,
+storico e statistiche, poi la scheda chiesta a qwen3.5 con schema JSON
+generato dal tipo, un retry e il fallback in testo libero. PromptBuilder
+puro, SchedaParser, CitazioniValidator (articoli normalizzati, citazioni
+inesistenti rimosse, tipi incoerenti e importi non verificati segnalati),
+SchedaMarkdownRenderer. Comando ask con avanzamento per passi, --out e --raw;
+span di telemetria per ogni passo. Dopo il CHECKPOINT 6: regole del prompt
+su sezioni, motivazioni, calcoli ed esclusioni; franchigia di base
+(Retrieval:ArticoloFranchigiaBase) aggiunta se nessuna franchigia è recuperata.
+
+Verifica: build della solution, 123 test verdi, 4 schede del CHECKPOINT 6
+in eval/checkpoint-6 con JSON valido al primo tentativo e nessun avviso.
 ```

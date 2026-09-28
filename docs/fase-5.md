@@ -240,6 +240,8 @@ Scostamenti:
 | `RicercaService` | firma senza `top` | `top` opzionale (default dalle opzioni) | lo usano `--top` dei comandi di debug e le fasi successive |
 | API | `RicercaService` usato anche dall'API | registrato in Core, gli endpoint arrivano con la Fase 8 | — |
 
+**Aggiornamento dalla Fase 6 (CHECKPOINT 6):** se nessuna franchigia è tra le clausole scelte, la query aggiunge la franchigia di base `Retrieval:ArticoloFranchigiaBase` (default `Art. 4.1`) come integrativa; nuovo test `ClausolaRepositoryTests.CercaPertinenti_FranchigiaDiBaseSoloSeNessunaFranchigia`. Scenari 1, 2 e 4 invariati (hanno già una franchigia); nello scenario 3 compare la 4.1.
+
 ## 9. Commit proposto (non eseguito)
 
 ```

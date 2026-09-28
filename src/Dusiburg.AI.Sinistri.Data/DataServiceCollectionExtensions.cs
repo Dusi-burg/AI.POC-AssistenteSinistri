@@ -1,5 +1,7 @@
 using Dusiburg.AI.Sinistri.Core.Health;
+using Dusiburg.AI.Sinistri.Core.PreIstruttoria;
 using Dusiburg.AI.Sinistri.Core.Retrieval;
+using Dusiburg.AI.Sinistri.Data.PreIstruttoria;
 using Dusiburg.AI.Sinistri.Data.Embedding;
 using Dusiburg.AI.Sinistri.Data.Retrieval;
 using Microsoft.Extensions.Configuration;
@@ -17,6 +19,7 @@ public static class DataServiceCollectionExtensions
         services.AddSingleton<EmbeddingRepository>();
         services.AddSingleton<IClausolaRepository, ClausolaRepository>();
         services.AddSingleton<ISinistroRepository, SinistroRepository>();
+        services.AddSingleton<IPolizzaRepository, PolizzaRepository>();
 
         return services;
     }

@@ -1,5 +1,9 @@
 using Dapper;
+using Dusiburg.AI.Sinistri.Core.Dominio;
+using Dusiburg.AI.Sinistri.Core.PreIstruttoria;
 using Dusiburg.AI.Sinistri.Core.Seed;
+using Dusiburg.AI.Sinistri.Data;
+using Dusiburg.AI.Sinistri.Data.PreIstruttoria;
 using Dusiburg.AI.Sinistri.Data.Schema;
 using Dusiburg.AI.Sinistri.Data.Seed;
 using Dusiburg.AI.Sinistri.Ingestion.Seed;
@@ -43,6 +47,27 @@ public class SeedTests
             WHERE CausaSinistroId = 3 AND Provincia = 'MI' AND StatoSinistroId = 2 AND ImportoLiquidato > 5000
             """), Is.GreaterThanOrEqualTo(8));
         Assert.That((await SeedRepository.ReadCausaStatoAsync(connection, CancellationToken)).Sum(r => r.Sinistri), Is.EqualTo(dati.Sinistri.Count));
+    }
+
+    [Test]
+    public async Task PolizzaRepository_PolizzaDemoPerNumero()
+    {
+        //SETUP
+        await DatabaseInitializer.RecreateAsync(TestDatabase.ConnectionString, TestDatabase.Dimensions, CancellationToken);
+        DateOnly oggi = DateOnly.FromDateTime(DateTime.Today);
+        await using (SqlConnection connection = await TestDatabase.OpenAsync())
+        {
+            await SeedRepository.InsertAsync(connection, SyntheticDataGenerator.Genera(SyntheticDataGenerator.DefaultRandomSeed, oggi), CancellationToken);
+        }
+        var repository = new PolizzaRepository(new SqlConnectionFactory(TestDatabase.ConnectionString));
+
+        //SUT
+        DatiPolizza? demo = await repository.GetByNumeroAsync(" CF-DEMO-000001 ", CancellationToken);
+        DatiPolizza? inesistente = await repository.GetByNumeroAsync("CF-XXXX-000000", CancellationToken);
+
+        Assert.That(demo, Is.EqualTo(new DatiPolizza("CF-DEMO-000001", Prodotto.CasaFabbricati, "Mario Bianchi", "MI",
+            oggi.AddYears(-1), oggi.AddYears(2), 300_000m, 250m)));
+        Assert.That(inesistente, Is.Null);
     }
 
     [Test]

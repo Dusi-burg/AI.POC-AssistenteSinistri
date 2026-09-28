@@ -21,7 +21,7 @@ public class ClausolaRepositoryTests
     public async Task CercaPertinenti_OrdinaPerDistanza()
     {
         //SUT
-        IReadOnlyList<ClausolaTrovata> trovate = await _repository.CercaPertinentiAsync(DatiRetrieval.Denuncia, Prodotto.CasaFabbricati, 2, 0.0, CancellationToken);
+        IReadOnlyList<ClausolaTrovata> trovate = await _repository.CercaPertinentiAsync(DatiRetrieval.Denuncia, Prodotto.CasaFabbricati, 2, 0.0, null, CancellationToken);
 
         Assert.That(trovate.Select(c => c.Articolo), Is.EqualTo(new[] { "Art. 2.1", "Art. 2.2" }));
         Assert.That(trovate.Select(c => c.Rank), Is.EqualTo(new[] { 1, 2 }));
@@ -34,8 +34,8 @@ public class ClausolaRepositoryTests
     public async Task CercaPertinenti_AggiungeEsclusioneEntroSoglia()
     {
         //SUT
-        IReadOnlyList<ClausolaTrovata> trovate = await _repository.CercaPertinentiAsync(DatiRetrieval.Denuncia, Prodotto.CasaFabbricati, 3, 0.45, CancellationToken);
-        IReadOnlyList<ClausolaTrovata> giaTraLePrime = await _repository.CercaPertinentiAsync(DatiRetrieval.Denuncia, Prodotto.CasaFabbricati, 4, 0.45, CancellationToken);
+        IReadOnlyList<ClausolaTrovata> trovate = await _repository.CercaPertinentiAsync(DatiRetrieval.Denuncia, Prodotto.CasaFabbricati, 3, 0.45, null, CancellationToken);
+        IReadOnlyList<ClausolaTrovata> giaTraLePrime = await _repository.CercaPertinentiAsync(DatiRetrieval.Denuncia, Prodotto.CasaFabbricati, 4, 0.45, null, CancellationToken);
 
         Assert.That(trovate.Select(c => (c.Articolo, c.Integrativa)),
             Is.EqualTo(new[] { ("Art. 2.1", false), ("Art. 2.2", false), ("Art. 1.1", false), ("Art. 3.1", true) }));
@@ -48,8 +48,8 @@ public class ClausolaRepositoryTests
     public async Task CercaPertinenti_NonAggiungeEsclusioneOltreSoglia()
     {
         //SUT
-        IReadOnlyList<ClausolaTrovata> sogliaBassa = await _repository.CercaPertinentiAsync(DatiRetrieval.Denuncia, Prodotto.CasaFabbricati, 3, 0.2, CancellationToken);
-        IReadOnlyList<ClausolaTrovata> sogliaAlta = await _repository.CercaPertinentiAsync(DatiRetrieval.Denuncia, Prodotto.CasaFabbricati, 3, 1.5, CancellationToken);
+        IReadOnlyList<ClausolaTrovata> sogliaBassa = await _repository.CercaPertinentiAsync(DatiRetrieval.Denuncia, Prodotto.CasaFabbricati, 3, 0.2, null, CancellationToken);
+        IReadOnlyList<ClausolaTrovata> sogliaAlta = await _repository.CercaPertinentiAsync(DatiRetrieval.Denuncia, Prodotto.CasaFabbricati, 3, 1.5, null, CancellationToken);
 
         Assert.That(sogliaBassa.Select(c => c.Articolo), Is.EqualTo(new[] { "Art. 2.1", "Art. 2.2", "Art. 1.1" }));
         Assert.That(sogliaAlta.Where(c => c.Integrativa).Select(c => c.Articolo), Is.EqualTo(new[] { "Art. 3.1", "Art. 4.1" }));
@@ -57,11 +57,27 @@ public class ClausolaRepositoryTests
     }
 
     [Test]
+    public async Task CercaPertinenti_FranchigiaDiBaseSoloSeNessunaFranchigia()
+    {
+        //SUT
+        IReadOnlyList<ClausolaTrovata> senzaFranchigie = await _repository.CercaPertinentiAsync(DatiRetrieval.Denuncia, Prodotto.CasaFabbricati, 3, 0.2, "Art. 4.1", CancellationToken);
+        IReadOnlyList<ClausolaTrovata> franchigiaGiaScelta = await _repository.CercaPertinentiAsync(DatiRetrieval.Denuncia, Prodotto.CasaFabbricati, 3, 1.5, "Art. 4.1", CancellationToken);
+        IReadOnlyList<ClausolaTrovata> baseSenzaEmbedding = await _repository.CercaPertinentiAsync(DatiRetrieval.Denuncia, Prodotto.CasaFabbricati, 3, 0.2, "Art. 4.2", CancellationToken);
+        IReadOnlyList<ClausolaTrovata> baseNonFranchigia = await _repository.CercaPertinentiAsync(DatiRetrieval.Denuncia, Prodotto.CasaFabbricati, 3, 0.2, "Art. 3.2", CancellationToken);
+
+        Assert.That(senzaFranchigie.Select(c => (c.Articolo, c.Rank, c.Integrativa)),
+            Is.EqualTo(new[] { ("Art. 2.1", 1, false), ("Art. 2.2", 2, false), ("Art. 1.1", 3, false), ("Art. 4.1", 6, true) }));
+        Assert.That(franchigiaGiaScelta.Count(c => c.Articolo == "Art. 4.1"), Is.EqualTo(1));
+        Assert.That(baseSenzaEmbedding, Has.Count.EqualTo(3));
+        Assert.That(baseNonFranchigia, Has.Count.EqualTo(3));
+    }
+
+    [Test]
     public async Task CercaPertinenti_FiltraPerProdotto()
     {
         //SUT
-        IReadOnlyList<ClausolaTrovata> rc = await _repository.CercaPertinentiAsync(DatiRetrieval.Denuncia, Prodotto.RcProfTecnici, 10, 2.0, CancellationToken);
-        IReadOnlyList<ClausolaTrovata> casa = await _repository.CercaPertinentiAsync(DatiRetrieval.Denuncia, Prodotto.CasaFabbricati, 10, 2.0, CancellationToken);
+        IReadOnlyList<ClausolaTrovata> rc = await _repository.CercaPertinentiAsync(DatiRetrieval.Denuncia, Prodotto.RcProfTecnici, 10, 2.0, null, CancellationToken);
+        IReadOnlyList<ClausolaTrovata> casa = await _repository.CercaPertinentiAsync(DatiRetrieval.Denuncia, Prodotto.CasaFabbricati, 10, 2.0, null, CancellationToken);
 
         Assert.That(rc.Select(c => c.Titolo), Is.EqualTo(new[] { "Garanzia RC identica alla denuncia" }));
         Assert.That(casa, Has.Count.EqualTo(6));

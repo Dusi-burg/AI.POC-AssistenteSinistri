@@ -24,7 +24,8 @@ public sealed class RicercaService(
 
         cronometro.Restart();
         IReadOnlyList<ClausolaTrovata> trovate = await clausole.CercaPertinentiAsync(
-            vettore, prodotto, top ?? retrieval.Value.TopClausole, retrieval.Value.DistanzaMaxClausolaIntegrativa, cancellationToken);
+            vettore, prodotto, top ?? retrieval.Value.TopClausole, retrieval.Value.DistanzaMaxClausolaIntegrativa,
+            retrieval.Value.ArticoloFranchigiaBase, cancellationToken);
 
         return new RisultatoRicercaClausole(trovate, new TempiRicerca(embedding, cronometro.Elapsed));
     }

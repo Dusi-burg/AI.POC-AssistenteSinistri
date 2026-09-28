@@ -32,9 +32,13 @@ public sealed record RisultatoRicercaStorico(IReadOnlyList<SinistroSimile> Simil
 
 public interface IClausolaRepository
 {
-    /// <summary>Le prime <paramref name="top"/> per distanza, più la migliore esclusione e la migliore franchigia entro la soglia (D10).</summary>
+    /// <summary>
+    /// Le prime <paramref name="top"/> per distanza, più la migliore esclusione e la migliore franchigia entro la soglia (D10); se
+    /// nessuna franchigia è tra queste, la franchigia di base <paramref name="articoloFranchigiaBase"/> (null: nessuna).
+    /// </summary>
     Task<IReadOnlyList<ClausolaTrovata>> CercaPertinentiAsync(
-        float[] vettoreDenuncia, Prodotto prodotto, int top, double distanzaMaxIntegrativa, CancellationToken cancellationToken);
+        float[] vettoreDenuncia, Prodotto prodotto, int top, double distanzaMaxIntegrativa, string? articoloFranchigiaBase,
+        CancellationToken cancellationToken);
 }
 
 public interface ISinistroRepository

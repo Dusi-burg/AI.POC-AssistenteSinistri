@@ -24,7 +24,8 @@ internal static class SinistriCli
             HealthCommand.Create(services),
             EmbedCommand.Create(services),
             SearchCommands.Clausole(services),
-            SearchCommands.Sinistri(services)
+            SearchCommands.Sinistri(services),
+            AskCommand.Create(services)
         };
 
         return await root.Parse(args).InvokeAsync();
