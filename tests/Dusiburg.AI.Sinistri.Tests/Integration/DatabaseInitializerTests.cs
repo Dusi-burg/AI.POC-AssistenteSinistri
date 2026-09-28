@@ -61,7 +61,10 @@ public class DatabaseInitializerTests
         //SUT
         IReadOnlyDictionary<string, int> dimensions = await DatabaseInitializer.ReadVectorDimensionsAsync(connection, CancellationToken);
 
-        Assert.That(dimensions, Is.EquivalentTo(new Dictionary<string, int> { ["Clausola.Embedding"] = 4, ["Sinistro.Embedding"] = 4 }));
+        Assert.That(dimensions, Is.EquivalentTo(new Dictionary<string, int>
+        {
+            ["Clausola.Embedding"] = 4, ["Sinistro.Embedding"] = 4, ["Sinistro.EmbeddingAntifrode"] = 4
+        }));
         Assert.That(await DatabaseInitializer.ReadEmbeddingInfoAsync(connection, CancellationToken), Is.Null);
     }
 

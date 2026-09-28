@@ -1,4 +1,4 @@
-# Stato del piano — aggiornato al 2026-09-25
+# Stato del piano — aggiornato al 2026-09-28
 
 > Punto di ripartenza per la prossima sessione.
 
@@ -12,11 +12,11 @@
 - **Fase 4 completata** (`fase-4.md` §6 bis): comando `embed` con prefissi EmbeddingGemma, tipo nativo `SqlVector<float>`, `EmbeddingInfo`; 470 vettori in 24 s su CPU.
 - **Fase 5 completata** (`fase-5.md` §8 bis): ricerca di clausole e storico, statistiche in SQL, `search-clausole` / `search-sinistri`; soglia integrativa 0,70, Art. 2.4 e 3.7 ritoccati; 5 scenari soddisfatti.
 - **Fase 6 completata, CHECKPOINT 6 superato** (`fase-6.md` §9 bis): comando `ask`, prompt rivisto al checkpoint, franchigia di base `Art. 4.1`; 4 schede in `eval/checkpoint-6` senza avvisi, 12–17 s ciascuna.
-- Aperto per la Fase 7: `SOGLIA_DUPLICATO_COSINE=0.08` è troppo bassa (soglia misurata per `embeddinggemma`: 0,18).
-- Aperto per la Fase 9: includere o no l'esito di perizia nel vettore del sinistro (`fase-4.md` §2); imprecisioni residue delle schede del CHECKPOINT 6 come casi del golden set (`fase-6.md` §9 bis).
+- **Fase 7 completata** (`fase-7.md` §2 bis e §6 bis): `fraud-scan` con valutazione (9 coppie attese su 10 a 0,05, precision 0,82 sulle coppie con un legame); controllo della nuova denuncia su `Sinistro.EmbeddingAntifrode` (sola descrizione) con `SOGLIA_DUPLICATO_DENUNCIA` 0,07; `embed` ora calcola 880 vettori (31 s). Output in `eval/fase-7`.
+- Aperto per la Fase 9: includere o no l'esito di perizia nel vettore del sinistro (`fase-4.md` §2; in Fase 7 serve al fraud-scan e ostacola il confronto con la denuncia nuova); imprecisioni residue delle schede del CHECKPOINT 6 come casi del golden set (`fase-6.md` §9 bis); interventi sui template del seed per ridurre i falsi positivi del fraud-scan (`fase-7.md` §6 bis).
 
 ## Da fare alla ripresa
 
-1. (Utente) `DbInit` e poi `embed` sul DB `Sinistri` (i diagrammi SSMS salvati nel DB andranno persi).
-2. (Utente) commit delle Fasi 3–6 con i testi di `fase-3.md`, `fase-4.md`, `fase-5.md` e `fase-6.md`.
-3. **Fase 7**: antifrode (controllo duplicati nella pre-istruttoria e `fraud-scan`).
+1. (Utente) commit della Fase 7 con il testo di `fase-7.md` §7 (include `data/duplicati_attesi.json` rigenerato ed `eval/fase-7`).
+2. Chi usa un DB creato prima della Fase 7 deve rieseguire DbInit ed `embed`: lo schema ha la nuova colonna `EmbeddingAntifrode`.
+3. **Fase 8**: UI web (`fase-8.md`); il fraud-scan è già esposto da `AntifrodeService.ScansionaAsync`.

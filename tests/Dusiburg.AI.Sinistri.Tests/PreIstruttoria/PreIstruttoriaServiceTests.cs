@@ -1,11 +1,14 @@
 using Dusiburg.AI.Sinistri.Ai;
 using Dusiburg.AI.Sinistri.Ai.PreIstruttoria;
+using Dusiburg.AI.Sinistri.Core.Antifrode;
 using Dusiburg.AI.Sinistri.Core.Dominio;
 using Dusiburg.AI.Sinistri.Core.Embedding;
 using Dusiburg.AI.Sinistri.Core.Options;
 using Dusiburg.AI.Sinistri.Core.PreIstruttoria;
 using Dusiburg.AI.Sinistri.Core.Retrieval;
+using Dusiburg.AI.Sinistri.Core.Seed;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Configuration;
 
 namespace Dusiburg.AI.Sinistri.Tests.PreIstruttoria;
 
@@ -76,18 +79,69 @@ public class PreIstruttoriaServiceTests
         Assert.That(esito.Scheda, Is.Not.Null);
         Assert.That(esito.Avvisi.Select(a => a.Tipo), Has.Some.EqualTo(TipoAvviso.Polizza));
         Assert.That(passi.Where(p => p.Durata is not null).Select(p => p.Passo),
-            Is.EqualTo(new[] { "polizza", "embedding", "clausole", "storico", "statistiche", "generazione scheda" }));
+            Is.EqualTo(new[] { "polizza", "embedding", "clausole", "storico", "statistiche", "generazione scheda", "antifrode" }));
         Assert.That(esito.Modello, Is.EqualTo("modello-finto"));
     }
 
-    private static PreIstruttoriaService Service(ChatFinta chat, TimeProvider? tempo = null) => new(
-        new PolizzeFinte(),
-        new EmbeddingFinto(),
-        new ClausoleFinte(),
-        new SinistriFinti(),
-        new ChatModel(chat, "modello-finto", new ChatOptions { Temperature = 0.1f }),
-        Microsoft.Extensions.Options.Options.Create(new RetrievalOptions()),
-        tempo ?? new TempoFisso(new DateTimeOffset(2026, 9, 25, 9, 0, 0, TimeSpan.Zero)));
+    [Test]
+    public async Task Genera_ControlloAntifrode_SegnalazioniNellEsitoENonNelPrompt()
+    {
+        //SETUP
+        var chat = new ChatFinta(SchedaValida);
+        var embedding = new EmbeddingFinto();
+        var antifrode = new AntifrodeFinto();
+        RichiestaPreIstruttoria conRiparatore = Richiesta with { CausaIndicata = CausaSinistro.AcquaCondotta, RiparatoreId = 6 };
+
+        //SUT
+        EsitoPreIstruttoria esito = await Service(chat, embedding: embedding, antifrode: antifrode)
+            .GeneraAsync(conRiparatore, null, null, CancellationToken.None);
+
+        Assert.That(esito.PossibiliDuplicati.Select(d => d.NumeroSinistro), Is.EqualTo(new[] { AntifrodeFinto.Segnalazione.NumeroSinistro }));
+        Assert.That(embedding.Documenti, Is.EqualTo(new[] { "Rottura di un tubo in bagno." }), "vettore antifrode: solo il racconto, senza la causa indicata");
+        Assert.That(antifrode.Richieste, Is.EqualTo(new[] { ("CF-DEMO-000001", (int?)6, 24, SinistriOptions.DefaultSogliaDuplicatoDenuncia) }));
+        Assert.That(chat.Richieste.SelectMany(r => r.Messaggi).Select(m => m.Text), Has.None.Contains(AntifrodeFinto.Segnalazione.NumeroSinistro));
+    }
+
+    private static PreIstruttoriaService Service(
+        ChatFinta chat, TimeProvider? tempo = null, EmbeddingFinto? embedding = null, AntifrodeFinto? antifrode = null)
+    {
+        embedding ??= new EmbeddingFinto();
+        var retrieval = Microsoft.Extensions.Options.Options.Create(new RetrievalOptions());
+        var antifrodeService = new AntifrodeService(
+            embedding, antifrode ?? new AntifrodeFinto(), SinistriOptions.FromConfiguration(new ConfigurationBuilder().Build()), retrieval);
+
+        return new PreIstruttoriaService(
+            new PolizzeFinte(),
+            embedding,
+            new ClausoleFinte(),
+            new SinistriFinti(),
+            antifrodeService,
+            new ChatModel(chat, "modello-finto", new ChatOptions { Temperature = 0.1f }),
+            retrieval,
+            tempo ?? new TempoFisso(new DateTimeOffset(2026, 9, 25, 9, 0, 0, TimeSpan.Zero)));
+    }
+
+    private sealed class AntifrodeFinto : IAntifrodeRepository
+    {
+        public static readonly SegnalazioneDuplicato Segnalazione = new("SIN-2026-000123", new DateOnly(2026, 5, 12), CausaSinistro.AcquaCondotta,
+            StatoSinistro.Chiuso, "Mario Bianchi", null, 0.02, MotivoSegnalazione.StessoContraente, "Tubo rotto in bagno.");
+
+        public List<(string NumeroPolizza, int? RiparatoreId, int Mesi, double Soglia)> Richieste { get; } = [];
+
+        public Task<IReadOnlyList<SegnalazioneDuplicato>> CercaDuplicatiDenunciaAsync(
+            float[] vettoreDenuncia, string numeroPolizza, int? riparatoreId, int mesi, double soglia, int top, CancellationToken cancellationToken)
+        {
+            Richieste.Add((numeroPolizza, riparatoreId, mesi, soglia));
+
+            return Task.FromResult<IReadOnlyList<SegnalazioneDuplicato>>([Segnalazione]);
+        }
+
+        public Task<IReadOnlyList<CoppiaSospetta>> CercaCoppieAsync(int mesi, double soglia, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
+        public Task<IReadOnlyList<DistanzaCoppiaAttesa>> DistanzeCoppieAsync(
+            IReadOnlyList<CoppiaDuplicati> coppie, int mesi, CancellationToken cancellationToken) => throw new NotSupportedException();
+    }
 
     private sealed class ChatFinta(params string[] risposte) : IChatClient
     {
@@ -124,7 +178,15 @@ public class PreIstruttoriaServiceTests
 
         public Task<float[]> EmbedQueryAsync(string text, CancellationToken cancellationToken) => Task.FromResult(new[] { 1f, 0f, 0f, 0f });
 
-        public Task<IReadOnlyList<float[]>> EmbedDocumentsAsync(IReadOnlyList<string> texts, CancellationToken cancellationToken) => throw new NotSupportedException();
+        /// <summary>Testi vettorizzati come documento: solo il controllo antifrode.</summary>
+        public List<string> Documenti { get; } = [];
+
+        public Task<IReadOnlyList<float[]>> EmbedDocumentsAsync(IReadOnlyList<string> texts, CancellationToken cancellationToken)
+        {
+            Documenti.AddRange(texts);
+
+            return Task.FromResult<IReadOnlyList<float[]>>([.. texts.Select(_ => new[] { 1f, 0f, 0f, 0f })]);
+        }
     }
 
     private sealed class ClausoleFinte : IClausolaRepository

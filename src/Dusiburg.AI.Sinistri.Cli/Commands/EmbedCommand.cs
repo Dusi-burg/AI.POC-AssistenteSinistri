@@ -11,8 +11,11 @@ internal static class EmbedCommand
 {
     public static Command Create(IServiceProvider services)
     {
-        var soloMancanti = new Option<bool>("--solo-mancanti") { Description = "Elabora solo le righe con Embedding NULL." };
-        var solo = new Option<TabellaEmbedding?>("--solo") { Description = "Elabora una sola tabella: clausole o sinistri." };
+        var soloMancanti = new Option<bool>("--solo-mancanti") { Description = "Elabora solo le righe con il vettore NULL." };
+        var solo = new Option<TabellaEmbedding?>("--solo")
+        {
+            Description = "Elabora un solo vettore: Clausole, Sinistri o SinistriAntifrode (solo descrizione, per i duplicati)."
+        };
 
         var command = new Command("embed", "Calcola e salva gli embedding di clausole e sinistri.") { soloMancanti, solo };
 
@@ -56,13 +59,13 @@ internal static class EmbedCommand
         {
             foreach (EmbedEsitoTabella tabella in esito.Tabelle)
             {
-                output.WriteLine($"{$"{tabella.Tabella}:",-10}{tabella.Vettori} vettori in {tabella.Durata:hh\\:mm\\:ss}");
+                output.WriteLine($"{$"{tabella.Tabella}:",-19}{tabella.Vettori} vettori in {tabella.Durata:hh\\:mm\\:ss}");
             }
 
-            output.WriteLine($"{"Totale:",-10}{vettori} vettori in {esito.Durata:hh\\:mm\\:ss} (modello {options.EmbeddingModel}, {options.EmbeddingDimensions} dim)");
+            output.WriteLine($"{"Totale:",-19}{vettori} vettori in {esito.Durata:hh\\:mm\\:ss} (modello {options.EmbeddingModel}, {options.EmbeddingDimensions} dim)");
         }
 
-        output.WriteLine($"Righe con Embedding NULL: {esito.RigheSenzaEmbedding}");
+        output.WriteLine($"Vettori NULL: {esito.RigheSenzaEmbedding}");
     }
 
     private static void Stampa(EmbedAvanzamento avanzamento)

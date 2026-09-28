@@ -53,12 +53,16 @@ public static class SchedaMarkdownRenderer
         if (esito.PossibiliDuplicati.Count == 0)
         {
             Riga(md, "Nessuna segnalazione.");
+            Riga(md);
         }
+        // Un riquadro per segnalazione: la riga vuota dopo ciascuna evita che il Markdown le fonda in un'unica citazione.
         foreach (SegnalazioneDuplicato s in esito.PossibiliDuplicati)
         {
-            Riga(md, $"> ⚠️ {s.NumeroSinistro} ({s.DataDenuncia:dd/MM/yyyy}, {s.Motivo}) — distanza {Formati.Distanza(s.Distanza)} — «{Formati.Tronca(s.Descrizione, 120)}»");
+            string riparatore = s.Riparatore is null ? "" : $" · riparatore {s.Riparatore}";
+            Riga(md, $"> ⚠️ {s.NumeroSinistro} ({s.DataDenuncia:dd/MM/yyyy}, {s.Motivo.Descrizione()}) — distanza {Formati.Distanza(s.Distanza)} — " +
+                $"contraente {s.Contraente}{riparatore} — «{Formati.Tronca(s.Descrizione, 120)}»");
+            Riga(md);
         }
-        Riga(md);
 
         Riga(md, "## Avvisi");
         if (esito.Avvisi.Count == 0)

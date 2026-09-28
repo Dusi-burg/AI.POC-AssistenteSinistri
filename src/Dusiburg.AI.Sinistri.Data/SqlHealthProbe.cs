@@ -138,9 +138,12 @@ public sealed class SqlHealthProbe(SqlConnectionFactory connectionFactory, Sinis
                 $"{options.EmbeddingModel} ({provider}, {options.EmbeddingDimensions}): rieseguire embed");
         }
 
-        // Conteggio su due tabelle da poche centinaia di righe: scansione accettabile, nessun indice su Embedding.
+        // Conteggio su due tabelle da poche centinaia di righe: scansione accettabile, nessun indice sulle colonne vettoriali.
         int mancanti = await connection.ExecuteScalarAsync<int>(new CommandDefinition(
-            "SELECT (SELECT COUNT(*) FROM dbo.Clausola WHERE Embedding IS NULL) + (SELECT COUNT(*) FROM dbo.Sinistro WHERE Embedding IS NULL)",
+            """
+            SELECT (SELECT COUNT(*) FROM dbo.Clausola WHERE Embedding IS NULL)
+                 + (SELECT COUNT(*) FROM dbo.Sinistro WHERE Embedding IS NULL OR EmbeddingAntifrode IS NULL)
+            """,
             cancellationToken: cancellationToken));
         string dettaglio = $"{colonne}; embedding di {info.Modello} ({info.Provider}) del {info.AggiornatoIl:yyyy-MM-dd HH:mm}";
 

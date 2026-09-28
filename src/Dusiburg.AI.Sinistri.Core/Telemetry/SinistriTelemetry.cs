@@ -15,5 +15,8 @@ public static class SinistriTelemetry
 
         /// <summary>Un'Activity per passo della pre-istruttoria (fase-6.md §4): polizza, embedding, SQL, LLM, validazione.</summary>
         public const string PreIstruttoria = "Dusiburg.AI.Sinistri.PreIstruttoria";
+
+        /// <summary>fraud-scan (fase-7.md §3); il controllo sulla nuova denuncia è il passo "antifrode" della pre-istruttoria.</summary>
+        public const string Antifrode = "Dusiburg.AI.Sinistri.Antifrode";
     }
 }

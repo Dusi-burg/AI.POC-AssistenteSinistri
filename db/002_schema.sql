@@ -102,6 +102,8 @@ CREATE TABLE dbo.Sinistro (
     ImportoRiservato DECIMAL(12, 2) NULL,
     ImportoLiquidato DECIMAL(12, 2) NULL,
     Embedding VECTOR($(EmbeddingDimensions)) NULL,
+    -- Solo la descrizione, senza causa né esito di perizia (fase-7.md §2 bis): confrontabile con una denuncia appena arrivata.
+    EmbeddingAntifrode VECTOR($(EmbeddingDimensions)) NULL,
     CONSTRAINT CK_Sinistro_Date CHECK (DataDenuncia >= DataEvento)
 );
 GO

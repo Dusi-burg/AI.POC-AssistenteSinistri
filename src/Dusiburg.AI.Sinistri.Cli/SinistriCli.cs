@@ -25,7 +25,8 @@ internal static class SinistriCli
             EmbedCommand.Create(services),
             SearchCommands.Clausole(services),
             SearchCommands.Sinistri(services),
-            AskCommand.Create(services)
+            AskCommand.Create(services),
+            FraudScanCommand.Create(services)
         };
 
         return await root.Parse(args).InvokeAsync();

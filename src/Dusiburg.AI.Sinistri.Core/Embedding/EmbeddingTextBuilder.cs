@@ -16,7 +16,14 @@ public static class EmbeddingTextBuilder
             ? $"Causa: {causa.Descrizione()}. {descrizione}"
             : $"Causa: {causa.Descrizione()}. {descrizione} Esito perizia: {esitoPerizia}";
 
-    /// <summary>Denuncia nuova (Fasi 5–7): la causa si antepone solo se nota.</summary>
+    /// <summary>Denuncia nuova (Fasi 5–6): la causa si antepone solo se nota.</summary>
     public static string Denuncia(string testo, CausaSinistro? causa) =>
         causa is { } nota ? $"Causa: {nota.Descrizione()}. {testo}" : testo;
+
+    /// <summary>
+    /// Antifrode (fase-7.md §2 bis): per il sinistro indicizzato e per la denuncia nuova il solo racconto, senza causa né esito di
+    /// perizia. L'esito allontana un sinistro dalla sua riformulazione (0,165 contro 0,057 misurato); la causa indicata o meno cambierebbe
+    /// la distanza a seconda di come è stata compilata la richiesta.
+    /// </summary>
+    public static string Antifrode(string descrizione) => descrizione.Trim();
 }
