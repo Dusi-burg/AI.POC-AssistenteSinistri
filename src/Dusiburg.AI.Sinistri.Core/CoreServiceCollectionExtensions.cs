@@ -2,6 +2,7 @@ using Dusiburg.AI.Sinistri.Core.Antifrode;
 using Dusiburg.AI.Sinistri.Core.Health;
 using Dusiburg.AI.Sinistri.Core.Options;
 using Dusiburg.AI.Sinistri.Core.Retrieval;
+using Dusiburg.AI.Sinistri.Core.Valutazione;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -26,6 +27,7 @@ public static class CoreServiceCollectionExtensions
         services.AddSingleton<HealthService>();
         services.AddSingleton<RicercaService>();
         services.AddSingleton<AntifrodeService>();
+        services.AddSingleton<EvalService>();
 
         return services;
     }

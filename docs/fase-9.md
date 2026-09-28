@@ -158,8 +158,63 @@ Sezioni del README:
 - README (EN + IT) e `docs/` completi.
 - Build della solution verde.
 
+## 7 bis. Esito (2026-09-28)
+
+### Valutazione
+
+`data/golden_set.json` con i 15 casi della distribuzione del §1 (11 casa, 4 RC), 2–5 rilevanti ciascuno, 11 casi con esclusioni da non
+perdere; da rivedere con l'utente insieme ai report.
+
+| Modello | Report | recall@5 | MRR | hit@1 | recall esclusioni |
+|---|---|---|---|---|---|
+| `embeddinggemma` (default, DB `Sinistri`) | `eval/report_2026-09-28_1609_embeddinggemma.md` | **0,76** ✓ | 0,92 | 0,87 | 1,00 |
+| `bge-m3` (DB `Sinistri_emb_ollama_bge_m3`, creato e vettorizzato in 6 s) | `eval/report_2026-09-28_1609_bge-m3.md` | 0,58 | 0,93 | 0,87 | 0,90 |
+
+- Il golden set **conferma** la scelta del CHECKPOINT 1b: `bge-m3` trova il primo rilevante altrettanto bene (MRR e hit@1 uguali) ma ne
+  porta meno tra i primi cinque.
+- I rilevanti mancanti con `embeddinggemma` sono soprattutto franchigie generiche (Art. 4.1 in 5 casi, 4.2 e 4.3): la ricerca pura
+  non le trova, la ricerca completa sì (franchigia di base e integrative). Casi peggiori: G08 (0,33, Art. 2.11 al 6° posto),
+  G11 e G15 (0,50; in G15 la retroattività 1.5 e il claims made 1.4 restano sotto l'oggetto dell'assicurazione e gli errori di calcolo).
+- Una valutazione dura meno di un secondo a modello caricato.
+
+### Criteri
+
+| Criterio | Esito |
+|---|---|
+| `dotnet test` verde in locale | ✓ 152 test (125 unit, 27 integrazione); build della solution senza warning, anche in Release |
+| CI | workflow scritto e simulato in locale (Release, filtro senza integrazione: 125 test); **da verificare al primo push** |
+| DB vuoto → `DbInit` → `embed` → `ask` | ✓ eseguito il 2026-09-28 in Fase 7 (DB attuale), schede in `eval/fase-7` e dalla Web in Fase 8 |
+| `fraud-scan` ≥ 8/10 | ✓ 9/10 alla soglia 0,05 (`fase-7.md` §6 bis) |
+| `eval` con recall@5 ≥ 0,7 | ✓ 0,76 |
+| README (EN + IT) e `docs/` | ✓ `README.md`, `README.it.md`, `docs/architettura.md`, `docs/demo.md`, `docs/il-progetto-in-breve.md`; mancano le schermate |
+
+### Scostamenti
+
+| Punto | Previsto | Fatto | Motivo |
+|---|---|---|---|
+| Confronto dei modelli | vincitore e due migliori sconfitti del banco | `embeddinggemma` e `bge-m3` (Ollama, CPU) | `bge-m3` su NPU (ONNX) non è integrato nell'applicazione e al banco dava vettori equivalenti a quelli su CPU (correttezza 0,9992): stesse metriche |
+| DB del modello alternativo | ricreato come `DbInit` | schema, lookup e **sole clausole**, riusato se già vettorizzato con quel modello | l'eval misura il pilastro A; i sinistri costerebbero tempo senza cambiare il risultato |
+| Nome del report | `report_<yyyy-MM-dd_HHmm>.md` | `report_<yyyy-MM-dd_HHmm>_<modello>.md` | due modelli valutati nello stesso minuto si sovrascrivevano |
+| Esclusione dei test in CI | categoria `RequiresSql2025` | categoria `Integration` esistente | lo schema stesso usa `VECTOR`: senza SQL Server 2025 fallisce *ogni* test di integrazione, non solo quelli vettoriali |
+| Test aggiunti | `EvalMetricsTests`, `GoldenSetTests` | in più: composizione del risultato per caso e medie, report Markdown | |
+| `docs/images/` | schermate di Web e dashboard | non fatte | servono un browser e la demo avviata: da aggiungere dopo la prova dell'utente |
+
+Nota: il DB `Sinistri_emb_ollama_bge_m3` resta su `localdev` per i confronti successivi; si può cancellare senza conseguenze.
+
 ## 8. Commit proposto (non eseguito)
 
 ```
 fase 9: golden set, comando eval, suite di test, CI e documentazione
+
+Golden set di 15 denunce (11 casa, 4 RC) con articoli rilevanti ed
+esclusioni da non perdere. EvalService in Core con metriche pure
+(recall@k, MRR, hit@1, recall delle esclusioni sulla ricerca completa) e
+report Markdown; comando eval con confronto dei modelli di embedding su un
+DB dedicato. embeddinggemma confermato: recall@5 0,76 contro 0,58 di bge-m3.
+Test delle metriche, del report e del golden set contro le clausole del
+seed. CI GitHub su Windows con LocalDB, test di integrazione saltati se la
+LocalDB non è SQL Server 2025. README in inglese e italiano, architettura,
+guida alla demo e presentazione del progetto per chi non sviluppa.
+
+Verifica: build della solution, 152 test verdi, eval su entrambi i modelli.
 ```
