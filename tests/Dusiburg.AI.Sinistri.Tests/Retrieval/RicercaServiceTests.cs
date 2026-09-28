@@ -64,7 +64,7 @@ public class RicercaServiceTests
         public List<(int Top, double DistanzaMax)> Richieste { get; } = [];
 
         public Task<IReadOnlyList<ClausolaTrovata>> CercaPertinentiAsync(
-            float[] vettoreDenuncia, Prodotto prodotto, int top, double distanzaMaxIntegrativa, CancellationToken cancellationToken)
+            float[] vettoreDenuncia, Prodotto prodotto, int top, double distanzaMaxIntegrativa, string? articoloFranchigiaBase, CancellationToken cancellationToken)
         {
             Richieste.Add((top, distanzaMaxIntegrativa));
 

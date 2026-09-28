@@ -16,6 +16,12 @@ public sealed class RetrievalOptions
     /// </summary>
     public double DistanzaMaxClausolaIntegrativa { get; set; } = 0.70;
 
+    /// <summary>
+    /// Franchigia aggiunta quando nessuna franchigia è tra le clausole recuperate (CHECKPOINT 6): stessa numerazione nei due prodotti
+    /// (casa "franchigia frontale", RC "franchigia fissa"). Vuota: nessuna aggiunta.
+    /// </summary>
+    public string? ArticoloFranchigiaBase { get; set; } = "Art. 4.1";
+
     public int TopSinistri { get; set; } = 10;
 
     public int SinistriNelPrompt { get; set; } = 5;

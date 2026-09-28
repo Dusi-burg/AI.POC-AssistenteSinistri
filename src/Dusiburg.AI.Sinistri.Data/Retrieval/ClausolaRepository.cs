@@ -14,10 +14,13 @@ namespace Dusiburg.AI.Sinistri.Data.Retrieval;
 public sealed class ClausolaRepository(SqlConnectionFactory connectionFactory) : IClausolaRepository
 {
     public async Task<IReadOnlyList<ClausolaTrovata>> CercaPertinentiAsync(
-        float[] vettoreDenuncia, Prodotto prodotto, int top, double distanzaMaxIntegrativa, CancellationToken cancellationToken)
+        float[] vettoreDenuncia, Prodotto prodotto, int top, double distanzaMaxIntegrativa, string? articoloFranchigiaBase,
+        CancellationToken cancellationToken)
     {
         await using SqlConnection connection = connectionFactory.CreateConnection();
 
+        // Selezionate: le prime @top più la migliore esclusione e la migliore franchigia entro la soglia (D10). Se nessuna franchigia
+        // è stata scelta si aggiunge la franchigia di base del prodotto (fase-6.md, CHECKPOINT 6), a qualunque distanza.
         IEnumerable<ClausolaTrovata> righe = await connection.QueryAsync<ClausolaTrovata>(new CommandDefinition(
             """
             WITH Distanze AS (
@@ -32,15 +35,23 @@ public sealed class ClausolaRepository(SqlConnectionFactory connectionFactory) :
                        ROW_NUMBER() OVER (ORDER BY Distanza, Id)                             AS RankGlobale,
                        ROW_NUMBER() OVER (PARTITION BY TipoClausolaId ORDER BY Distanza, Id) AS RankPerTipo
                 FROM Distanze
+            ),
+            Selezionate AS (
+                SELECT *,
+                       CASE WHEN RankGlobale <= @top
+                                 OR (RankPerTipo = 1 AND TipoClausolaId IN (@esclusioneId, @franchigiaId) AND Distanza <= @distanzaMax)
+                            THEN 1 ELSE 0 END AS Scelta
+                FROM Classificate
             )
             SELECT Id, Articolo, TipoClausolaId AS Tipo, Titolo, Testo, CAST(Distanza AS float) AS Distanza,
                    CAST(RankGlobale AS int) AS Rank,
                    CAST(CASE WHEN RankGlobale > @top THEN 1 ELSE 0 END AS bit) AS Integrativa
-            FROM Classificate
-            WHERE RankGlobale <= @top
-               OR (RankPerTipo = 1
-                   AND TipoClausolaId IN (@esclusioneId, @franchigiaId)
-                   AND Distanza <= @distanzaMax)
+            FROM Selezionate
+            WHERE Scelta = 1
+               OR (@franchigiaBase IS NOT NULL
+                   AND Articolo = @franchigiaBase
+                   AND TipoClausolaId = @franchigiaId
+                   AND NOT EXISTS (SELECT 1 FROM Selezionate AS s WHERE s.Scelta = 1 AND s.TipoClausolaId = @franchigiaId))
             ORDER BY Distanza, Id;
             """,
             new
@@ -50,7 +61,9 @@ public sealed class ClausolaRepository(SqlConnectionFactory connectionFactory) :
                 top,
                 esclusioneId = (byte)TipoClausola.Esclusione,
                 franchigiaId = (byte)TipoClausola.Franchigia,
-                distanzaMax = distanzaMaxIntegrativa
+                distanzaMax = distanzaMaxIntegrativa,
+                // Articolo è NVARCHAR(20): parametro Unicode della stessa lunghezza; null disattiva la franchigia di base.
+                franchigiaBase = new DbString { Value = string.IsNullOrWhiteSpace(articoloFranchigiaBase) ? null : articoloFranchigiaBase, Length = 20 }
             },
             cancellationToken: cancellationToken));
 

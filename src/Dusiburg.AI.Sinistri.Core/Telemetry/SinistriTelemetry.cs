@@ -12,5 +12,8 @@ public static class SinistriTelemetry
         public const string Data = "Dusiburg.AI.Sinistri.Data";
         public const string Chat = "Dusiburg.AI.Sinistri.Ai.Chat";
         public const string Embedding = "Dusiburg.AI.Sinistri.Ai.Embedding";
+
+        /// <summary>Un'Activity per passo della pre-istruttoria (fase-6.md §4): polizza, embedding, SQL, LLM, validazione.</summary>
+        public const string PreIstruttoria = "Dusiburg.AI.Sinistri.PreIstruttoria";
     }
 }
