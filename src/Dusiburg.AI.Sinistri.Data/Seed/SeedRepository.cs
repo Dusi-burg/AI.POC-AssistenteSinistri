@@ -6,12 +6,6 @@ using Microsoft.Data.SqlClient;
 
 namespace Dusiburg.AI.Sinistri.Data.Seed;
 
-public sealed record ConteggioSeed(int Contraenti, int Riparatori, int Polizze, int Clausole, int Sinistri);
-
-public sealed record DistribuzioneCausaStato(CausaSinistro Causa, StatoSinistro Stato, int Sinistri);
-
-public sealed record DistribuzioneProdottoProvincia(Prodotto Prodotto, string Provincia, int Sinistri);
-
 /// <summary>
 /// Inserimento dei dati sintetici nel DB appena ricreato da DbInit (fase-3.md, passo 6). Gli Id sono quelli del generatore
 /// (<c>IDENTITY_INSERT</c>): il DB è vuoto, quindi non servono controlli su righe già presenti. Con ~400 righe basta Dapper.

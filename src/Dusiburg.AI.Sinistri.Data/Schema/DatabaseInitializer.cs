@@ -1,11 +1,9 @@
 using Dapper;
 using Dusiburg.AI.Sinistri.Core.Dominio;
+using Dusiburg.AI.Sinistri.Core.Embedding;
 using Microsoft.Data.SqlClient;
 
 namespace Dusiburg.AI.Sinistri.Data.Schema;
-
-/// <summary>Modello e runtime con cui sono stati calcolati i vettori salvati (tabella <c>EmbeddingInfo</c>).</summary>
-public sealed record EmbeddingInfo(string Modello, EmbeddingProvider Provider, int Dimensioni, DateTime AggiornatoIl);
 
 /// <summary>
 /// Ricrea da zero il database del POC (D17, come <c>O2CDatabaseInitializer</c>): drop, creazione, schema con la dimensione

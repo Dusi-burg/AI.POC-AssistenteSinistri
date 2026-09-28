@@ -1,0 +1,13 @@
+@model StatisticheSimili
+<div class="card border-info h-100">
+    <div class="card-header small">Statistiche sui casi simili <br /><span class="text-muted">calcolate dal database, non dal modello</span></div>
+    <div class="card-body small">
+        <dl class="row mb-0">
+            <dt class="col-7">Casi</dt><dd class="col-5 text-end">@Model.NumeroCasi</dd>
+            <dt class="col-7">Respinti</dt><dd class="col-5 text-end">@Model.Respinti (@Formati.Percentuale(Model.PercentualeRespinti))</dd>
+            <dt class="col-7">Liquidato min</dt><dd class="col-5 text-end">@SinistriPresentation.Euro(Model.LiquidatoMin)</dd>
+            <dt class="col-7">Mediana</dt><dd class="col-5 text-end">@SinistriPresentation.Euro(Model.LiquidatoMediana)</dd>
+            <dt class="col-7">Liquidato max</dt><dd class="col-5 text-end">@SinistriPresentation.Euro(Model.LiquidatoMax)</dd>
+        </dl>
+    </div>
+</div>

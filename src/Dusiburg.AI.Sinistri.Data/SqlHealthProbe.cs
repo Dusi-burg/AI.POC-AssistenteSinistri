@@ -1,5 +1,6 @@
 using Dapper;
 using Dusiburg.AI.Sinistri.Core.Dominio;
+using Dusiburg.AI.Sinistri.Core.Embedding;
 using Dusiburg.AI.Sinistri.Core.Health;
 using Dusiburg.AI.Sinistri.Core.Options;
 using Dusiburg.AI.Sinistri.Data.Schema;
