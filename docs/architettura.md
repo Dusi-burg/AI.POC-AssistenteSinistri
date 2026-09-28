@@ -236,5 +236,7 @@ Sezione `Retrieval` di `appsettings.json` (Api e Cli): `TopClausole` 5, `Distanz
   incoerente ma non lo corregge (`fase-6.md` §9 bis).
 - **Esito di perizia nel vettore del sinistro**: utile al fraud-scan, di ostacolo al confronto con una denuncia nuova; oggi risolto con
   un secondo vettore.
-- **Scala**: ricerca esatta senza indice vettoriale, adeguata a centinaia di righe; DiskANN e `VECTOR_SEARCH` sono nella Fase 10.
+- **Scala**: ricerca esatta senza indice vettoriale. Il banco della Fase 10.1 (`fase-10.md` §10.1 bis) misura 96 ms di media a 50.000
+  sinistri; l'indice DiskANN con `VECTOR_SEARCH` e `TOP_N` = 20×k dà gli stessi risultati in 14 ms, ma su SQL Server 2025 è in anteprima,
+  applica i filtri dopo la ricerca approssimata e rende la tabella di sola lettura: per questo non è nel DB della demo.
 - **CI**: se la LocalDB del runner non è SQL Server 2025 i test di integrazione vengono saltati, restano obbligatori in locale.

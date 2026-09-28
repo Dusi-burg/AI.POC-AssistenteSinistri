@@ -23,6 +23,97 @@ Passi:
 
 Riuscita: tabella tempi + overlap nel report `eval/bench_<data>.md`. Stima: 1 giornata (esclusi i tempi di embedding).
 
+### 10.1 bis. Esito (2026-09-28)
+
+#### Verifiche preliminari (SQL Server 2025 RTM-CU3, 17.0.4025.3, **Express / LocalDB**)
+
+| Verifica | Esito |
+|---|---|
+| `CREATE VECTOR INDEX … TYPE = 'diskann'` | ✓ disponibile anche su LocalDB, ma **in anteprima**: senza `ALTER DATABASE SCOPED CONFIGURATION SET PREVIEW_FEATURES = ON` il tipo `VECTOR` dell'indice non è riconosciuto (errore 343) |
+| `QUOTED_IDENTIFIER` | deve essere `ON` (errore 1934); SqlClient lo imposta già, `sqlcmd` solo con `-I` |
+| `VECTOR_SEARCH` | ✓, anche con `TOP_N` da variabile e in join; si riconosce solo in un batch compilato nel DB con l'anteprima attiva (un `USE` nello stesso batch non basta) |
+| Filtri | applicati **dopo** la ricerca approssimata: con `TOP_N = 10` e un filtro tornano meno di 10 righe |
+| Scritture | ✗ con l'indice la tabella è **di sola lettura** (errore 42231, anche per `INSERT` e `UPDATE`) |
+
+Conseguenza: l'indice non può stare nel DB della demo (`embed` e ogni nuovo sinistro fallirebbero). Il banco usa un database dedicato.
+
+#### Cosa è stato fatto
+
+- `SyntheticDataGenerator.Genera(seed, oggi, numeroSinistri)`: numero di sinistri parametrico (default 400, demo invariata), stesse proporzioni per causa e stato.
+- Comando `bench-search [--sinistri 50000] [--ripetizioni 50] [--k 10]`:
+  1. DB `Sinistri_bench_<n>`, ricreato solo se il conteggio non torna; dati sintetici con lo stesso seed;
+  2. solo `Sinistro.Embedding`, **un vettore per testo distinto** (26.115 testi per 50.010 sinistri), riprendibile se interrotto;
+  3. indice DiskANN (`RicercaApprossimataRepository.CreaIndiceAsync`);
+  4. 35 interrogazioni — 19 con i filtri della scheda (le 15 denunce del golden set e i 4 scenari di pre-istruttoria) e 16 con filtri selettivi (scenario 5; le 15 denunce ristrette a MI) — ciascuna 50 volte con la ricerca esatta di produzione (`SinistroRepository`) e con `VECTOR_SEARCH` a `TOP_N` = 1×, 5×, 20× k, alternate;
+  5. report `eval/bench_<data>_<n>.md`.
+- Due misure di overlap: **per Id** e **per distanza**. 30.635 sinistri su 50.010 hanno un vettore identico a un altro (stesso testo): a parità di distanza la ricerca esatta sceglie per Id, l'indice ne può restituire un altro altrettanto vicino. L'overlap per distanza conta come giusto un risultato non più lontano del k-esimo esatto.
+
+#### Risultati — `eval/bench_2026-09-28_1713_50010.md`
+
+Preparazione (prima esecuzione): embedding **20:20** su CPU, indice DiskANN **2:30**. Misure: 158 s.
+
+| Filtri | Metodo | Media ms | p95 ms | Overlap per Id | Overlap per distanza | Risultati medi (su 10) |
+|---|---|---|---|---|---|---|
+| di base (19) | esatta | 95,9 | 121,4 | 1,00 | 1,00 | 10,0 |
+| | indice, `TOP_N` = 1×k | 2,9 | 3,9 | 0,64 | 0,64 | 6,7 |
+| | indice, `TOP_N` = 5×k | 5,3 | 7,8 | 0,88 | 0,92 | 9,2 |
+| | indice, `TOP_N` = 20×k | **14,1** | 19,2 | 0,95 | **1,00** | 10,0 |
+| selettivi (16) | esatta | 25,1 | 29,5 | 1,00 | 1,00 | 10,0 |
+| | indice, `TOP_N` = 5×k | 5,9 | 7,6 | 0,54 | 0,54 | 5,4 |
+| | indice, `TOP_N` = 20×k | 16,0 | 18,7 | 0,89 | 0,89 | 9,6 |
+
+Lettura:
+- Con i filtri della scheda l'indice con `TOP_N` = 20×k dà **gli stessi risultati** della scansione esatta (a meno dei pari merito) in **un settimo del tempo**; con 5×k è 18 volte più veloce ma in 2 interrogazioni su 19 restituisce meno di 10 sinistri.
+- Le perdite non vengono da vicini sbagliati ma dal **post-filtro**: l'indice restituisce i `TOP_N` più vicini di tutto l'archivio (anche aperti, di altri prodotti, più vecchi di 5 anni) e i filtri li scartano dopo. Con filtri selettivi (una provincia su 12) servono `TOP_N` molto più grandi, mentre la scansione esatta è già a 25 ms, perché i filtri riducono le righe su cui calcolare la distanza.
+- A 50.000 sinistri la ricerca esatta resta sotto i 100 ms di media: per questo POC (~400 sinistri) l'indice non serve; diventa interessante a scale maggiori e con filtri poco selettivi, quando le scritture non sono un problema (oggi lo sono: tabella di sola lettura).
+
+#### Considerazioni: usare l'indice solo quando i filtri sono poco selettivi
+
+Domanda emersa in review: ha senso usare `VECTOR_SEARCH` solo quando l'interrogazione non ha altri filtri selettivi? Sì, ma il criterio
+giusto non è "ci sono altri filtri?", è **quante righe lasciano passare i filtri**. Anche la ricerca della scheda ha filtri (prodotto,
+chiuso o respinto, ultimi 5 anni), ma sono poco selettivi: lasciano passare gran parte dell'archivio, ed è lì che l'indice vince.
+
+- **Filtri poco selettivi**: la ricerca esatta calcola la distanza su quasi tutte le righe (96 ms), l'indice con `TOP_N` = 20×k dà gli
+  stessi risultati in 14 ms.
+- **Filtri selettivi**: la ricerca esatta confronta poche righe ed è già a 25 ms, mentre l'indice perde risultati perché filtra *dopo*
+  aver preso i vicini da tutto l'archivio.
+
+Strategia adattiva possibile:
+1. **Stima della selettività**: un `COUNT` con gli stessi filtri, economico perché non calcola distanze; in alternativa, una regola
+   sui filtri presenti (provincia, causa, importo minimo restringono molto).
+2. **Pochi candidati** (per esempio sotto qualche migliaio di righe): ricerca esatta, già veloce e sempre completa.
+3. **Molti candidati**: `VECTOR_SEARCH` con `TOP_N` proporzionale all'inverso della selettività (se passa il 60% delle righe,
+   `TOP_N` ≈ k / 0,6 × un margine), invece di un fattore fisso.
+4. **Rete di sicurezza**: se l'indice restituisce meno di k risultati, si rilancia la ricerca esatta. La completezza resta garantita e il
+   costo in più si paga solo nei casi rari.
+
+Limiti che restano, indipendenti dalla strategia:
+- **Sola lettura**: è il vero ostacolo. L'archivio dei sinistri riceve scritture di continuo e l'antifrode sulla nuova denuncia ha
+  bisogno proprio dei sinistri più recenti. Si aggira solo con uno schema a due livelli — indice su una copia storica ricostruita
+  periodicamente, più ricerca esatta sulle righe arrivate dopo, con i risultati uniti — che funziona ma aggiunge molta complessità.
+- **Anteprima**: nessuna scelta definitiva su una funzionalità in anteprima; da ricontrollare nei prossimi aggiornamenti di SQL Server
+  2025, sia per la sola lettura sia per il modo in cui vengono applicati i filtri.
+- **Scala**: la ricerca esatta cresce in modo lineare; a 50.000 sinistri è sotto i 100 ms, la strategia comincia a pagare verso qualche
+  centinaio di migliaia di righe. Per il POC non serve.
+
+Sviluppo possibile, non eseguito: un metodo "adattivo" in `bench-search` (stima della selettività, `TOP_N` proporzionale, rilancio
+esatto) da confrontare con gli altri sulle stesse 35 interrogazioni; con `Sinistri_bench_50000` già pronto la misura richiede pochi
+minuti.
+
+#### Scostamenti
+
+| Punto | Previsto | Fatto | Motivo |
+|---|---|---|---|
+| Dove vive l'indice | `dbo.Sinistro` | DB dedicato `Sinistri_bench_50000` | con l'indice la tabella è di sola lettura |
+| Opzione del seed | `seed --sinistri 50000` | parametro del generatore, usato da `bench-search` (DbInit invariato) | il DB del banco si prepara da solo; la demo resta a 400 |
+| Tempi di embedding | 1–2 ore stimate | 20 minuti | un vettore per testo distinto; solo il vettore del pilastro B |
+| Overlap | per Id | per Id e per distanza | i pari merito dovuti ai testi ripetuti falsavano la misura per Id |
+| `TOP_N` | 5 × top | 1×, 5×, 20× k | per mostrare il compromesso tra tempo e completezza |
+
+Test: `BenchMetricsTests` (overlap per Id e per distanza, percentili, riepilogo, report) e `RicercaApprossimataRepositoryTests` (indice creato una volta, `TOP_N` ampio uguale alla ricerca esatta, post-filtro con `TOP_N` stretto, tabella in sola lettura) su `Sinistri_Test`.
+
+Nota: `Sinistri_bench_50000` (~50.000 righe, indice compreso) resta su `localdev` per rilanciare le misure in 3 minuti; si può cancellare senza conseguenze.
+
 ---
 
 ## 10.2 Embedding lato SQL (`CREATE EXTERNAL MODEL` + `AI_GENERATE_EMBEDDINGS`)
