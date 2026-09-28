@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using Dusiburg.AI.Sinistri.Core.Antifrode;
 using Dusiburg.AI.Sinistri.Core.Embedding;
 using Dusiburg.AI.Sinistri.Core.Options;
 using Dusiburg.AI.Sinistri.Core.PreIstruttoria;
@@ -13,12 +14,14 @@ namespace Dusiburg.AI.Sinistri.Ai.PreIstruttoria;
 /// <summary>
 /// Pre-istruttoria (fase-6.md §2): polizza → embedding della denuncia → clausole e storico → prompt → scheda JSON validata.
 /// Un solo vettore della denuncia per entrambe le ricerche. Ogni passo è cronometrato e ha il suo span di telemetria.
+/// Ultimo passo il controllo antifrode (fase-7.md §4), fuori dal prompt: il modello non deve ragionare su un indizio statistico.
 /// </summary>
 public sealed class PreIstruttoriaService(
     IPolizzaRepository polizze,
     IEmbeddingService embeddingService,
     IClausolaRepository clausole,
     ISinistroRepository sinistri,
+    AntifrodeService antifrode,
     ChatModel chat,
     IOptions<RetrievalOptions> retrieval,
     TimeProvider timeProvider)
@@ -76,10 +79,14 @@ public sealed class PreIstruttoriaService(
             validazione?.SetTag("sinistri.avvisi", validata.Avvisi.Count);
         }
 
-        var tempi = new TempiEsecuzione(tPolizza, tEmbedding, tClausole, tStorico, tStatistiche, tLlm, totale.Elapsed);
-        traccia?.SetTag("sinistri.esito", scheda is null ? "testo libero" : "scheda");
+        (IReadOnlyList<SegnalazioneDuplicato> duplicati, TimeSpan tAntifrode) = await PassoAsync("antifrode", avanzamento, () =>
+            antifrode.ControllaDenunciaAsync(richiesta, cancellationToken));
 
-        return new EsitoPreIstruttoria(richiesta, polizza, scheda, testoLibero, trovate, simili, statistiche, avvisi, [], tempi,
+        var tempi = new TempiEsecuzione(tPolizza, tEmbedding, tClausole, tStorico, tStatistiche, tLlm, tAntifrode, totale.Elapsed);
+        traccia?.SetTag("sinistri.esito", scheda is null ? "testo libero" : "scheda");
+        traccia?.SetTag("sinistri.duplicati", duplicati.Count);
+
+        return new EsitoPreIstruttoria(richiesta, polizza, scheda, testoLibero, trovate, simili, statistiche, avvisi, duplicati, tempi,
             chat.ModelId, timeProvider.GetLocalNow());
     }
 

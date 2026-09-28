@@ -66,10 +66,15 @@ public class EmbeddingPipelineTests
         EmbedEsito completo = await pipeline.RunAsync(new EmbedRichiesta(SoloMancanti: false, tutte), null, CancellationToken);
         EmbedEsito mancanti = await pipeline.RunAsync(new EmbedRichiesta(SoloMancanti: true, tutte), null, CancellationToken);
 
-        Assert.That(completo.Tabelle.Select(t => (t.Tabella, t.Vettori)), Is.EqualTo(new[] { (TabellaEmbedding.Clausole, 60), (TabellaEmbedding.Sinistri, 410) }));
+        Assert.That(completo.Tabelle.Select(t => (t.Tabella, t.Vettori)), Is.EqualTo(new[]
+        {
+            (TabellaEmbedding.Clausole, 60), (TabellaEmbedding.Sinistri, 410), (TabellaEmbedding.SinistriAntifrode, 410)
+        }));
         Assert.That(completo.RigheSenzaEmbedding, Is.Zero);
-        Assert.That(servizio.Testi, Has.Count.EqualTo(470));
+        Assert.That(servizio.Testi, Has.Count.EqualTo(880));
         Assert.That(servizio.Testi, Has.Some.StartsWith("Franchigia / scoperto / limite - ").And.Some.StartsWith("Causa: Acqua condotta. "));
+        // Il vettore antifrode è la sola descrizione: niente causa, niente esito di perizia.
+        Assert.That(servizio.Testi.Skip(470), Has.None.StartsWith("Causa: ").And.None.Contains("Esito perizia: "));
         Assert.That(mancanti.Tabelle.Sum(t => t.Vettori), Is.Zero);
         Assert.That(await _repository.ReadEmbeddingInfoAsync(CancellationToken), Has.Property("Modello").EqualTo("embeddinggemma").And.Property("Dimensioni").EqualTo(4));
     }
@@ -90,7 +95,7 @@ public class EmbeddingPipelineTests
             Throws.InvalidOperationException);
         EmbedEsito completo = await altroModello.RunAsync(new EmbedRichiesta(false, Enum.GetValues<TabellaEmbedding>()), null, CancellationToken);
 
-        Assert.That(completo.Tabelle.Sum(t => t.Vettori), Is.EqualTo(470));
+        Assert.That(completo.Tabelle.Sum(t => t.Vettori), Is.EqualTo(880));
         Assert.That((await _repository.ReadEmbeddingInfoAsync(CancellationToken))?.Modello, Is.EqualTo("bge-m3"));
     }
 
@@ -119,7 +124,12 @@ public class EmbeddingPipelineTests
         ProbeResult completo = (await probe.RunAsync(CancellationToken)).Single(r => r.Numero == 9);
         await using (SqlConnection connection = await TestDatabase.OpenAsync())
         {
-            await connection.ExecuteAsync("UPDATE TOP (3) dbo.Sinistro SET Embedding = NULL");
+            // Due righe senza il vettore dello storico, una senza quello antifrode.
+            await connection.ExecuteAsync(
+                """
+                UPDATE dbo.Sinistro SET Embedding = NULL WHERE Id IN (SELECT TOP (2) Id FROM dbo.Sinistro ORDER BY Id);
+                UPDATE dbo.Sinistro SET EmbeddingAntifrode = NULL WHERE Id = (SELECT MAX(Id) FROM dbo.Sinistro);
+                """);
         }
         ProbeResult incompleto = (await probe.RunAsync(CancellationToken)).Single(r => r.Numero == 9);
 

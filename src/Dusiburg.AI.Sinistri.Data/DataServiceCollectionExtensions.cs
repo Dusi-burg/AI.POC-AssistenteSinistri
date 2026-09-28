@@ -1,6 +1,8 @@
+using Dusiburg.AI.Sinistri.Core.Antifrode;
 using Dusiburg.AI.Sinistri.Core.Health;
 using Dusiburg.AI.Sinistri.Core.PreIstruttoria;
 using Dusiburg.AI.Sinistri.Core.Retrieval;
+using Dusiburg.AI.Sinistri.Data.Antifrode;
 using Dusiburg.AI.Sinistri.Data.PreIstruttoria;
 using Dusiburg.AI.Sinistri.Data.Embedding;
 using Dusiburg.AI.Sinistri.Data.Retrieval;
@@ -20,6 +22,7 @@ public static class DataServiceCollectionExtensions
         services.AddSingleton<IClausolaRepository, ClausolaRepository>();
         services.AddSingleton<ISinistroRepository, SinistroRepository>();
         services.AddSingleton<IPolizzaRepository, PolizzaRepository>();
+        services.AddSingleton<IAntifrodeRepository, AntifrodeRepository>();
 
         return services;
     }

@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Dusiburg.AI.Sinistri.Core.Dominio;
 using Dusiburg.AI.Sinistri.Core.Retrieval;
 
@@ -43,15 +44,23 @@ public enum TipoAvviso
 
 public sealed record Avviso(TipoAvviso Tipo, string Messaggio);
 
-/// <summary>Motivo di una segnalazione antifrode (Fase 7): solo codice, non persistito.</summary>
+/// <summary>Motivo di una segnalazione antifrode (fase-7.md §1): solo codice, non persistito.</summary>
 public enum MotivoSegnalazione : byte
 {
+    [Description("stesso contraente")]
     StessoContraente = 1,
+
+    [Description("stesso riparatore")]
     StessoRiparatore = 2,
+
+    [Description("stesso contraente e riparatore")]
     StessoContraenteERiparatore = 3,
+
+    [Description("solo testo simile")]
+    SoloTestoSimile = 4,
 }
 
-/// <summary>Nuova denuncia → sinistro esistente molto simile (Fase 7). Fino ad allora la lista resta vuota.</summary>
+/// <summary>Nuova denuncia → sinistro esistente molto simile (fase-7.md §2): mostrata accanto alla scheda, mai passata al modello.</summary>
 public sealed record SegnalazioneDuplicato(
     string NumeroSinistro, DateOnly DataDenuncia, CausaSinistro Causa, StatoSinistro Stato,
     string Contraente, string? Riparatore, double Distanza, MotivoSegnalazione Motivo, string Descrizione);
@@ -60,7 +69,8 @@ public sealed record SegnalazioneDuplicato(
 public sealed record AvanzamentoPreIstruttoria(string Passo, TimeSpan? Durata);
 
 public sealed record TempiEsecuzione(
-    TimeSpan Polizza, TimeSpan Embedding, TimeSpan Clausole, TimeSpan Storico, TimeSpan Statistiche, TimeSpan Llm, TimeSpan Totale);
+    TimeSpan Polizza, TimeSpan Embedding, TimeSpan Clausole, TimeSpan Storico, TimeSpan Statistiche, TimeSpan Llm, TimeSpan Antifrode,
+    TimeSpan Totale);
 
 public sealed record EsitoPreIstruttoria(
     RichiestaPreIstruttoria Richiesta,

@@ -1,3 +1,4 @@
+using Dusiburg.AI.Sinistri.Core.Antifrode;
 using Dusiburg.AI.Sinistri.Core.Health;
 using Dusiburg.AI.Sinistri.Core.Options;
 using Dusiburg.AI.Sinistri.Core.Retrieval;
@@ -24,6 +25,7 @@ public static class CoreServiceCollectionExtensions
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<HealthService>();
         services.AddSingleton<RicercaService>();
+        services.AddSingleton<AntifrodeService>();
 
         return services;
     }

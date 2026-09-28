@@ -11,7 +11,7 @@ public sealed record TestoDaVettorizzare(int Id, string Testo);
 
 /// <summary>
 /// Lettura dei testi, scrittura dei vettori ed <c>EmbeddingInfo</c> (fase-4.md §3). Le pagine si leggono per chiave primaria
-/// (<c>Id &gt; @dopoId ORDER BY Id</c>, seek sull'indice cluster); il filtro <c>Embedding IS NULL</c> non ha un indice e resta un
+/// (<c>Id &gt; @dopoId ORDER BY Id</c>, seek sull'indice cluster); il filtro sul vettore <c>NULL</c> non ha un indice e resta un
 /// predicato residuo: con ~60 clausole e ~410 sinistri va bene.
 /// </summary>
 public sealed class EmbeddingRepository(SqlConnectionFactory connectionFactory)
@@ -21,7 +21,7 @@ public sealed class EmbeddingRepository(SqlConnectionFactory connectionFactory)
         await using SqlConnection connection = connectionFactory.CreateConnection();
 
         return await connection.ExecuteScalarAsync<int>(new CommandDefinition(
-            $"SELECT COUNT(*) FROM dbo.{Nome(tabella)} {(soloMancanti ? "WHERE Embedding IS NULL" : "")}",
+            $"SELECT COUNT(*) FROM dbo.{Nome(tabella)} {(soloMancanti ? $"WHERE {Colonna(tabella)} IS NULL" : "")}",
             cancellationToken: cancellationToken));
     }
 
@@ -29,7 +29,7 @@ public sealed class EmbeddingRepository(SqlConnectionFactory connectionFactory)
         TabellaEmbedding tabella, bool soloMancanti, int dopoId, int dimensionePagina, CancellationToken cancellationToken)
     {
         await using SqlConnection connection = connectionFactory.CreateConnection();
-        string mancanti = soloMancanti ? "AND Embedding IS NULL" : "";
+        string mancanti = soloMancanti ? $"AND {Colonna(tabella)} IS NULL" : "";
         var parametri = new { dopoId, dimensionePagina };
 
         return tabella switch
@@ -48,6 +48,13 @@ public sealed class EmbeddingRepository(SqlConnectionFactory connectionFactory)
                     parametri, cancellationToken: cancellationToken)))
                     .Select(r => new TestoDaVettorizzare(r.Id, EmbeddingTextBuilder.Sinistro(r.Causa, r.Descrizione, r.Esito)))
             ],
+            TabellaEmbedding.SinistriAntifrode =>
+            [
+                .. (await connection.QueryAsync<(int Id, string Descrizione)>(new CommandDefinition(
+                    $"SELECT TOP (@dimensionePagina) Id, Descrizione FROM dbo.Sinistro WHERE Id > @dopoId {mancanti} ORDER BY Id",
+                    parametri, cancellationToken: cancellationToken)))
+                    .Select(r => new TestoDaVettorizzare(r.Id, EmbeddingTextBuilder.Antifrode(r.Descrizione)))
+            ],
             _ => throw new ArgumentOutOfRangeException(nameof(tabella), tabella, null)
         };
     }
@@ -62,7 +69,7 @@ public sealed class EmbeddingRepository(SqlConnectionFactory connectionFactory)
         foreach ((int id, float[] vettore) in righe)
         {
             await connection.ExecuteAsync(new CommandDefinition(
-                $"UPDATE dbo.{Nome(tabella)} SET Embedding = @embedding WHERE Id = @id",
+                $"UPDATE dbo.{Nome(tabella)} SET {Colonna(tabella)} = @embedding WHERE Id = @id",
                 new { id, embedding = new VectorParameter(vettore) }, transaction, cancellationToken: cancellationToken));
         }
 
@@ -106,7 +113,11 @@ public sealed class EmbeddingRepository(SqlConnectionFactory connectionFactory)
     private static string Nome(TabellaEmbedding tabella) => tabella switch
     {
         TabellaEmbedding.Clausole => "Clausola",
-        TabellaEmbedding.Sinistri => "Sinistro",
+        TabellaEmbedding.Sinistri or TabellaEmbedding.SinistriAntifrode => "Sinistro",
         _ => throw new ArgumentOutOfRangeException(nameof(tabella), tabella, null)
     };
+
+    /// <summary>Colonna vettoriale della destinazione, mai da input esterno.</summary>
+    private static string Colonna(TabellaEmbedding tabella) =>
+        tabella == TabellaEmbedding.SinistriAntifrode ? "EmbeddingAntifrode" : "Embedding";
 }

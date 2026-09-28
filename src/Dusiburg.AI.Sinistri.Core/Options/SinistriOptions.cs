@@ -32,6 +32,7 @@ public sealed record SinistriOptions(
     string? EmbeddingOnnxPath,
     int EmbeddingDimensions,
     double SogliaDuplicatoCosine,
+    double SogliaDuplicatoDenuncia,
     string? PromptCaptureDirectory,
     bool Warmup)
 {
@@ -57,7 +58,17 @@ public sealed record SinistriOptions(
     /// <summary>Limite del tipo <c>VECTOR</c> di SQL Server 2025 in <c>float32</c>.</summary>
     public const int MaxEmbeddingDimensions = 1998;
 
-    public const double DefaultSogliaDuplicatoCosine = 0.08;
+    /// <summary>
+    /// fraud-scan tra sinistri, sul vettore completo (fase-7.md §6 bis): la più bassa con recall ≥ 0,8 sulle coppie attese
+    /// (9 su 10; precision 0,82 sulle coppie con stesso contraente o riparatore).
+    /// </summary>
+    public const double DefaultSogliaDuplicatoCosine = 0.05;
+
+    /// <summary>
+    /// Nuova denuncia contro i sinistri, sul vettore della sola descrizione (fase-7.md §2 bis): una riformulazione sta a 0,057, il primo
+    /// sinistro non legato a 0,086.
+    /// </summary>
+    public const double DefaultSogliaDuplicatoDenuncia = 0.07;
 
     /// <summary>Valore di <c>EMBEDDING_NUM_GPU</c> che lascia la scelta a Ollama.</summary>
     public const string AutomaticNumGpu = "auto";
@@ -74,6 +85,7 @@ public sealed record SinistriOptions(
         public const string EmbeddingOnnxPath = "EMBEDDING_ONNX_PATH";
         public const string EmbeddingDimensions = "EMBEDDING_DIMENSIONS";
         public const string SogliaDuplicatoCosine = "SOGLIA_DUPLICATO_COSINE";
+        public const string SogliaDuplicatoDenuncia = "SOGLIA_DUPLICATO_DENUNCIA";
         public const string PromptCaptureDirectory = "SINISTRI_PROMPT_CAPTURE_DIR";
         public const string Warmup = "SINISTRI_WARMUP";
 
@@ -82,7 +94,7 @@ public sealed record SinistriOptions(
         [
             OllamaEndpoint, OllamaChatModel, OllamaNumCtx,
             EmbeddingProvider, EmbeddingEndpoint, EmbeddingModel, EmbeddingNumGpu, EmbeddingOnnxPath, EmbeddingDimensions,
-            SogliaDuplicatoCosine, PromptCaptureDirectory, Warmup
+            SogliaDuplicatoCosine, SogliaDuplicatoDenuncia, PromptCaptureDirectory, Warmup
         ];
     }
 
@@ -114,6 +126,7 @@ public sealed record SinistriOptions(
             onnxPath,
             ReadInt(configuration, Keys.EmbeddingDimensions, DefaultEmbeddingDimensions, minimum: 1, maximum: MaxEmbeddingDimensions),
             ReadDouble(configuration, Keys.SogliaDuplicatoCosine, DefaultSogliaDuplicatoCosine, minimum: 0, maximum: 2),
+            ReadDouble(configuration, Keys.SogliaDuplicatoDenuncia, DefaultSogliaDuplicatoDenuncia, minimum: 0, maximum: 2),
             NonEmpty(configuration[Keys.PromptCaptureDirectory]),
             ReadBool(configuration, Keys.Warmup, defaultValue: true));
     }
