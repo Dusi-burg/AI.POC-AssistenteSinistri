@@ -168,7 +168,7 @@ Report completo: [`eval/embedding-bench_2026-09-25.md`](../eval/embedding-bench_
 | `amd/bge-m3-onnx` + tokenizer BAAI | `%LOCALAPPDATA%\Dusiburg.AI.Sinistri\models\bge-m3-onnx` (2,2 GB) | |
 | `amd/embeddinggemma-300m_npu_rai_1.8.0_npu_4K` | `…\models\embeddinggemma-300m-npu` (260 MB) | non utilizzabile (P2b) |
 | Ollama `embeddinggemma` (621 MB) | Ollama | autorizzato il 2026-09-25 come riferimento CPU di P2 |
-| Cache del compilatore VitisAI | `C:\Temp\dusim\vaip\.cache` (~1 GB) | scelta dall'EP; senza cache la prima sessione NPU di `bge-m3` compila per ~6,5 minuti, con la cache si apre in ~1 s |
+| Cache del compilatore VitisAI | `C:\Temp\<utente>\vaip\.cache` (~1 GB) | scelta dall'EP; senza cache la prima sessione NPU di `bge-m3` compila per ~6,5 minuti, con la cache si apre in ~1 s |
 
 Ryzen AI Software 1.8 **non** è servito: l'EP della NPU arriva con Windows ML.
 
