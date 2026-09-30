@@ -118,9 +118,15 @@ public sealed class OllamaHealthProbe(SinistriOptions options, EmbeddingGenerato
         bool embeddingInVram = embedding is not null && embedding.SizeVram > 0;
         bool chatOffGpu = chat is not null && chat.SizeVram < chat.Size;
 
-        ProbeStatus stato = embeddingInVram || chatOffGpu ? ProbeStatus.Warning : ProbeStatus.Info;
+        IEnumerable<string> avvisi = new[]
+        {
+            embeddingInVram ? "embedding in VRAM: può costringere Ollama a scaricare la chat" : null,
+            chatOffGpu ? "chat non tutta in VRAM: risposte più lente, liberare VRAM o ridurre il contesto" : null
+        }.OfType<string>();
 
-        return (stato, $"{chatText}; {embeddingText}");
+        string dettaglio = string.Join("; ", [chatText, embeddingText, .. avvisi]);
+
+        return (embeddingInVram || chatOffGpu ? ProbeStatus.Warning : ProbeStatus.Info, dettaglio);
     }
 
     private static string Placement(RunningModel model)

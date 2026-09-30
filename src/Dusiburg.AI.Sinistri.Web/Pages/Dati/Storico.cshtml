@@ -1,0 +1,104 @@
+@page
+@model Dusiburg.AI.Sinistri.Web.Pages.Dati.StoricoModel
+@using Dusiburg.AI.Sinistri.Web.Pages.Dati
+@{
+    ViewData["Title"] = "Storico sinistri";
+}
+
+<h1 class="h3">Storico dei sinistri</h1>
+<p class="text-muted">Tutti i sinistri dei dati sintetici, dal più recente. ⧉ indica una coppia di quasi-duplicati inserita apposta dal
+    seed (quella che il fraud-scan deve trovare) e porta al gemello.</p>
+
+<form method="get" class="card card-body mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-2">
+            <label asp-for="Prodotto" class="form-label small">Prodotto</label>
+            <select asp-for="Prodotto" class="form-select form-select-sm">
+                <option value="">(tutti)</option>
+                @foreach (var prodotto in Enum.GetValues<Prodotto>())
+                {
+                    <option value="@prodotto">@prodotto.Descrizione()</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label asp-for="Causa" class="form-label small">Causa</label>
+            <select asp-for="Causa" class="form-select form-select-sm">
+                <option value="">(tutte)</option>
+                @foreach (var gruppo in IndexModel.CausePerProdotto())
+                {
+                    <optgroup label="@gruppo.Key.Descrizione()">
+                        @foreach (var causa in gruppo)
+                        {
+                            <option value="@causa">@causa.Descrizione()</option>
+                        }
+                    </optgroup>
+                }
+            </select>
+        </div>
+        <div class="col-md-1">
+            <label asp-for="Stato" class="form-label small">Stato</label>
+            <select asp-for="Stato" class="form-select form-select-sm">
+                <option value="">(tutti)</option>
+                @foreach (var stato in Enum.GetValues<StatoSinistro>())
+                {
+                    <option value="@stato">@stato</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-1">
+            <label asp-for="Provincia" class="form-label small">Prov.</label>
+            <input asp-for="Provincia" class="form-control form-control-sm" maxlength="2" placeholder="MI" />
+        </div>
+        <div class="col-md-1">
+            <label asp-for="Anno" class="form-label small">Anno</label>
+            <select asp-for="Anno" class="form-select form-select-sm">
+                <option value="">(tutti)</option>
+                @foreach (var anno in StoricoModel.Anni)
+                {
+                    <option value="@anno">@anno</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label asp-for="Riparatore" class="form-label small">Riparatore</label>
+            <select asp-for="Riparatore" class="form-select form-select-sm">
+                <option value="">(tutti)</option>
+                @foreach (var riparatore in Model.Riparatori)
+                {
+                    <option value="@riparatore.Id">@riparatore.RagioneSociale</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label asp-for="Testo" class="form-label small">Nella descrizione</label>
+            <input asp-for="Testo" class="form-control form-control-sm" placeholder="parquet" />
+        </div>
+        <div class="col-md-1 d-flex gap-1">
+            <button type="submit" class="btn btn-primary btn-sm w-100">Filtra</button>
+        </div>
+    </div>
+    <div class="mt-2"><a asp-page="/Dati/Storico" class="small">azzera i filtri</a></div>
+</form>
+
+@if (Model.Errore is { } errore)
+{
+    <div class="alert alert-danger">@errore</div>
+}
+
+@if (Model.Elenco is { } elenco)
+{
+    @if (Model.PerStato.Count > 0)
+    {
+        <p class="small">
+            @foreach (var (stato, numero) in Model.PerStato)
+            {
+                <span class="badge @SinistriPresentation.StatoSinistroClass(stato) me-1">@stato · @numero</span>
+            }
+        </p>
+    }
+
+    @await Html.PartialAsync("_Paginazione", new PaginazioneVista(elenco.Numero, elenco.Pagine, elenco.Totale, "sinistri"))
+    <partial name="_TabellaSinistri" model="elenco.Righe" />
+    @await Html.PartialAsync("_Paginazione", new PaginazioneVista(elenco.Numero, elenco.Pagine, elenco.Totale, "sinistri"))
+}

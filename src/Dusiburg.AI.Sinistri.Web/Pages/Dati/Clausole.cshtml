@@ -1,0 +1,66 @@
+@page
+@model Dusiburg.AI.Sinistri.Web.Pages.Dati.ClausoleModel
+@{
+    ViewData["Title"] = "Catalogo clausole";
+}
+
+<h1 class="h3">Catalogo delle clausole</h1>
+<p class="text-muted">Le condizioni di polizza della demo, scritte a mano e fittizie: il catalogo su cui lavora la ricerca del pilastro A.
+    La stessa versione, stampabile, è in <code>docs/clausole.md</code> nel repository.</p>
+
+<div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
+    <ul class="nav nav-pills">
+        @foreach (var prodotto in Enum.GetValues<Prodotto>())
+        {
+            <li class="nav-item">
+                <a class="nav-link @(prodotto == Model.Prodotto ? "active" : "")" asp-page="/Dati/Clausole" asp-route-prodotto="@prodotto" asp-route-testo="@Model.Testo">@prodotto.Descrizione()</a>
+            </li>
+        }
+    </ul>
+    <form method="get" class="d-flex gap-2">
+        <input type="hidden" name="prodotto" value="@Model.Prodotto" />
+        <input asp-for="Testo" class="form-control form-control-sm" placeholder="cerca in articolo, titolo e testo" />
+        <button type="submit" class="btn btn-primary btn-sm">Cerca</button>
+    </form>
+</div>
+
+@if (Model.Errore is { } errore)
+{
+    <div class="alert alert-danger">@errore</div>
+}
+
+@if (Model.Errore is null && Model.Clausole.Count == 0)
+{
+    <p class="text-muted">Nessuna clausola@(Model.Testo is { Length: > 0 } ? $" contiene «{Model.Testo}»" : "").</p>
+}
+
+<p class="small">
+    @foreach (var tipo in Dusiburg.AI.Sinistri.Web.Pages.Dati.ClausoleModel.OrdineTipi)
+    {
+        int numero = Model.Clausole.Count(c => c.Tipo == tipo);
+        if (numero > 0)
+        {
+            <a href="#tipo-@tipo" class="badge @SinistriPresentation.TipoClausolaClass(tipo) text-decoration-none me-1">@tipo.Descrizione() · @numero</a>
+        }
+    }
+</p>
+
+@foreach (var tipo in Dusiburg.AI.Sinistri.Web.Pages.Dati.ClausoleModel.OrdineTipi)
+{
+    var delTipo = Model.Clausole.Where(c => c.Tipo == tipo).ToList();
+    if (delTipo.Count == 0)
+    {
+        continue;
+    }
+
+    <section id="tipo-@tipo" class="mb-4">
+        <h2 class="h5"><span class="badge @SinistriPresentation.TipoClausolaClass(tipo)">@tipo.Descrizione()</span></h2>
+        @foreach (var clausola in delTipo)
+        {
+            <article id="@OrdineArticoli.Ancora(clausola.Prodotto, clausola.Articolo)" class="clausola-catalogo">
+                <h3 class="h6 mb-1"><a href="#@OrdineArticoli.Ancora(clausola.Prodotto, clausola.Articolo)" class="text-decoration-none">@clausola.Articolo</a> — @clausola.Titolo</h3>
+                <p class="mb-0">@clausola.Testo</p>
+            </article>
+        }
+    </section>
+}

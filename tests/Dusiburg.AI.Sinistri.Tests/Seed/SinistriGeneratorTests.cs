@@ -37,7 +37,7 @@ public class SinistriGeneratorTests
         Assert.That(dati.Polizze, Has.Count.EqualTo(AnagraficheGenerator.PolizzeCasuali + 3));
         Assert.That(dati.Polizze.Count(p => p.Prodotto == Prodotto.RcProfTecnici && !p.Numero.Contains("DEMO", StringComparison.Ordinal)),
             Is.EqualTo(AnagraficheGenerator.PolizzeRcCasuali));
-        Assert.That(dati.Sinistri, Has.Count.EqualTo(SinistriGenerator.Sinistri + dati.Coppie.Count));
+        Assert.That(dati.Sinistri, Has.Count.EqualTo(SinistriGenerator.SinistriDefault + dati.Coppie.Count));
         Assert.That(dati.Polizze.Select(p => p.Numero), Is.Unique);
         Assert.That(dati.Sinistri.Select(s => s.Numero), Is.Unique.And.All.Match(@"^SIN-\d{4}-\d{6}$"));
         Assert.That(dati.Sinistri.Select(s => s.Id), Is.EqualTo(Enumerable.Range(1, dati.Sinistri.Count)));

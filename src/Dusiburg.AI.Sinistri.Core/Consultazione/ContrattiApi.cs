@@ -88,4 +88,13 @@ public interface IConsultazioneRepository
     Task<SinistroDettaglio?> GetSinistroAsync(string numero, CancellationToken cancellationToken);
 
     Task<StatisticheDataset> GetStatisticheDatasetAsync(CancellationToken cancellationToken);
+
+    /// <summary>Catalogo (fase-9b.md): per prodotto e articolo in ordine numerico; <paramref name="testo"/> su articolo, titolo e testo.</summary>
+    Task<IReadOnlyList<ClausolaDettaglio>> GetClausoleAsync(Prodotto? prodotto, TipoClausola? tipo, string? testo, CancellationToken cancellationToken);
+
+    /// <summary>Polizze con il numero di sinistri, le demo per prime, poi per numero.</summary>
+    Task<Pagina<PolizzaElenco>> ElencaPolizzeAsync(string? cerca, bool soloDemo, int pagina, int dimensione, CancellationToken cancellationToken);
+
+    /// <summary>Sinistri filtrati, per data di denuncia decrescente.</summary>
+    Task<Pagina<SinistroElenco>> ElencaSinistriAsync(FiltriElencoSinistri filtri, int pagina, int dimensione, CancellationToken cancellationToken);
 }

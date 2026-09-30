@@ -1,0 +1,39 @@
+@page
+@model Dusiburg.AI.Sinistri.Web.Pages.Dati.PolizzaModel
+@{
+    ViewData["Title"] = Model.Polizza?.Numero ?? "Polizza";
+}
+
+@if (Model.Errore is { } errore)
+{
+    <div class="alert alert-danger">@errore</div>
+}
+
+@if (Model.Polizza is { } p)
+{
+    <div class="d-flex flex-wrap align-items-baseline justify-content-between gap-2 mb-3">
+        <h1 class="h3 mb-0">Polizza @p.Numero</h1>
+        <a class="btn btn-primary btn-sm" asp-page="/Index" asp-route-polizza="@p.Numero">Pre-istruttoria su questa polizza</a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body small">
+            <dl class="row mb-0">
+                <dt class="col-sm-2">Prodotto</dt><dd class="col-sm-4">@p.Prodotto.Descrizione()</dd>
+                <dt class="col-sm-2">Contraente</dt><dd class="col-sm-4">@p.Contraente (@p.Provincia)</dd>
+                <dt class="col-sm-2">Validità</dt><dd class="col-sm-4">@p.Decorrenza.ToString("dd/MM/yyyy") → @p.Scadenza.ToString("dd/MM/yyyy")</dd>
+                <dt class="col-sm-2">Massimale</dt><dd class="col-sm-4">@Formati.Euro(p.Massimale)</dd>
+                <dt class="col-sm-2">Franchigia</dt><dd class="col-sm-4">@Formati.Euro(p.Franchigia)</dd>
+                <dt class="col-sm-2">Clausole</dt><dd class="col-sm-4"><a asp-page="/Dati/Clausole" asp-route-prodotto="@p.Prodotto">catalogo del prodotto</a></dd>
+            </dl>
+        </div>
+    </div>
+
+    <h2 class="h5">Sinistri denunciati (@(Model.Sinistri?.Totale ?? 0))</h2>
+    @if (Model.Sinistri is { } sinistri)
+    {
+        <partial name="_TabellaSinistri" model="sinistri.Righe" />
+    }
+}
+
+<p class="mt-3"><a asp-page="/Dati/Polizze">← tutte le polizze</a></p>

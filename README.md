@@ -125,6 +125,8 @@ There are no migrations: after a schema change re-run `DbInit`, then `embed`. Th
 | `ask "<notice>" --polizza <number> [--data-evento] [--causa] [--riparatore] [--out file.md] [--raw]` | Pre-assessment sheet in Markdown |
 | `fraud-scan [--mesi 12] [--soglia] [--valuta]` | Near-duplicate pairs and precision/recall against the planted pairs |
 | `eval [--top 5] [--embedding-model <m> --embedding-provider <p> --embedding-dimensions <n>]` | Golden-set evaluation, report in `eval/` |
+| `export-clausole [--out docs/clausole.md]` | Writes the clause catalogue as Markdown ([docs/clausole.md](docs/clausole.md)) |
+| `bench-search [--sinistri 50000] [--ripetizioni 50] [--k 10]` | Exact scan vs DiskANN index with `VECTOR_SEARCH` on a dedicated database, report in `eval/` |
 
 ## Evaluation
 
@@ -153,14 +155,18 @@ test calls Ollama. CI skips them when the runner's LocalDB is older than SQL Ser
 ## Known limits and next steps
 
 - Template-generated data inflates the fraud scan's false positives; the model sometimes repeats an article in two entries (flagged, not fixed).
-- Exact vector search without an index, fine for hundreds of rows; DiskANN with `VECTOR_SEARCH`, embeddings in T-SQL, full-text
-  hybrid search with Reciprocal Rank Fusion and a tool-calling agent are the optional phase 10.
+- Exact vector search without an index. Phase 10.1 benchmarked it at 50,000 claims: 96 ms on average, against 14 ms for a DiskANN index
+  with `VECTOR_SEARCH` (`TOP_N` = 20×k, same results). On SQL Server 2025 the index is a preview feature, filters apply after the
+  approximate search and the table becomes read-only, so the demo database does not use it.
+- Embeddings in T-SQL, full-text hybrid search with Reciprocal Rank Fusion, a reranker and a tool-calling agent are the other optional
+  phase 10 extensions.
 
 ## Further documentation (Italian)
 
 - [docs/il-progetto-in-breve.md](docs/il-progetto-in-breve.md) — what the assistant does and why you can trust it, for non-developers.
 - [docs/architettura.md](docs/architettura.md) — the specification, and the source of truth.
 - [docs/demo.md](docs/demo.md) — preparation, scenarios and a 15-minute demo script.
+- [docs/clausole.md](docs/clausole.md) — the catalogue of the 60 (fictitious) policy clauses, generated from the database.
 - `docs/PLAN.md` and `docs/fase-*.md` — the phased plan with the outcome of every phase.
 
 ## License

@@ -1,5 +1,6 @@
 using Dusiburg.AI.Sinistri.Ai;
 using Dusiburg.AI.Sinistri.Core.Antifrode;
+using Dusiburg.AI.Sinistri.Core.Consultazione;
 using Dusiburg.AI.Sinistri.Core.Dominio;
 using Dusiburg.AI.Sinistri.Core.Embedding;
 using Dusiburg.AI.Sinistri.Core.Health;
@@ -157,6 +158,38 @@ internal sealed class AntifrodeFinto : IAntifrodeRepository
 
     public Task<IReadOnlyList<DistanzaCoppiaAttesa>> DistanzeCoppieAsync(IReadOnlyList<CoppiaDuplicati> coppie, int mesi, CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyList<DistanzaCoppiaAttesa>>([]);
+}
+
+/// <summary>Consultazione dei dati demo con elenchi fissi; registra filtri e pagine ricevuti.</summary>
+internal sealed class ConsultazioneFinta : IConsultazioneRepository
+{
+    public static readonly SinistroElenco Sinistro = new(1, "SIN-2026-000024", "CF-DEMO-000001", Prodotto.CasaFabbricati, "Mario Bianchi", null,
+        new DateOnly(2026, 2, 11), new DateOnly(2026, 2, 21), "MI", CausaSinistro.FenomenoElettrico, StatoSinistro.Chiuso, 5490m, "Temporale e quadro elettrico.");
+
+    public List<(FiltriElencoSinistri Filtri, int Pagina, int Dimensione)> Elenchi { get; } = [];
+
+    public Task<Pagina<SinistroElenco>> ElencaSinistriAsync(FiltriElencoSinistri filtri, int pagina, int dimensione, CancellationToken cancellationToken)
+    {
+        Elenchi.Add((filtri, pagina, dimensione));
+
+        return Task.FromResult(new Pagina<SinistroElenco>([Sinistro], pagina, dimensione, 1));
+    }
+
+    public Task<IReadOnlyList<PolizzaVoce>> CercaPolizzeAsync(string? cerca, int top, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    public Task<IReadOnlyList<RiparatoreVoce>> GetRiparatoriAsync(CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    public Task<ClausolaDettaglio?> GetClausolaAsync(int id, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    public Task<SinistroDettaglio?> GetSinistroAsync(string numero, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    public Task<StatisticheDataset> GetStatisticheDatasetAsync(CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    public Task<IReadOnlyList<ClausolaDettaglio>> GetClausoleAsync(Prodotto? prodotto, TipoClausola? tipo, string? testo, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
+
+    public Task<Pagina<PolizzaElenco>> ElencaPolizzeAsync(string? cerca, bool soloDemo, int pagina, int dimensione, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
 }
 
 /// <summary>Modello che risponde sempre con lo stesso testo.</summary>

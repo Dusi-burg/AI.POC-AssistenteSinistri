@@ -18,15 +18,16 @@ public sealed class SinistriHealthCheck(HealthReportCache cache) : IHealthCheck
 
         if (report.HasErrors)
         {
-            string errors = string.Join("; ", report.Controlli.Where(c => c.Stato == ProbeStatus.Error).Select(c => $"{c.Nome}: {c.Dettaglio}"));
-
-            return HealthCheckResult.Unhealthy(errors, data: data);
+            return HealthCheckResult.Unhealthy(Describe(report, ProbeStatus.Error), data: data);
         }
 
         return report.HasWarnings
-            ? HealthCheckResult.Degraded("controlli superati con avvisi", data: data)
+            ? HealthCheckResult.Degraded($"controlli superati con avvisi: {Describe(report, ProbeStatus.Warning)}", data: data)
             : HealthCheckResult.Healthy("tutti i controlli superati", data);
     }
+
+    private static string Describe(ProbeReport report, ProbeStatus stato) =>
+        string.Join("; ", report.Controlli.Where(c => c.Stato == stato).Select(c => $"{c.Nome}: {c.Dettaglio}"));
 }
 
 /// <summary>

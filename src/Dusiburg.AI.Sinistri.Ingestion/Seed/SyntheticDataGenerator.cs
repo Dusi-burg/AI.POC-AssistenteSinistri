@@ -12,13 +12,17 @@ public static class SyntheticDataGenerator
 {
     public const int DefaultRandomSeed = 20260924;
 
-    public static DatiSintetici Genera(int randomSeed, DateOnly oggi)
+    /// <summary>Sinistri della demo (esclusi i quasi-duplicati).</summary>
+    public const int SinistriDefault = SinistriGenerator.SinistriDefault;
+
+    /// <param name="numeroSinistri">Sinistri generati, copertura demo compresa ed esclusi i quasi-duplicati; più di 400 solo per il banco di prova (fase-10.md §10.1).</param>
+    public static DatiSintetici Genera(int randomSeed, DateOnly oggi, int numeroSinistri = SinistriDefault)
     {
         var faker = new Faker("it") { Random = new Randomizer(randomSeed) };
 
         Anagrafiche anagrafiche = new AnagraficheGenerator(faker, oggi).Genera();
 
-        var sinistriGenerator = new SinistriGenerator(faker.Random, oggi, anagrafiche);
+        var sinistriGenerator = new SinistriGenerator(faker.Random, oggi, anagrafiche, numeroSinistri);
         List<SinistroSintetico> sinistri = sinistriGenerator.Genera();
 
         IReadOnlyList<CoppiaProvvisoria> coppie = new QuasiDuplicatiGenerator(faker.Random, oggi, anagrafiche)

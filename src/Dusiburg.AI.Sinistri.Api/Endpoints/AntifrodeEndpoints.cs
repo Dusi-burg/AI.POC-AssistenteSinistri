@@ -38,28 +38,9 @@ public static class AntifrodeEndpoints
             return TypedResults.ValidationProblem(errori);
         }
 
-        IReadOnlyList<CoppiaDuplicati>? attese = await LeggiAtteseAsync(loggerFactory.CreateLogger(typeof(AntifrodeEndpoints)), cancellationToken);
+        // Senza le coppie attese il fraud-scan va comunque, senza valutazione.
+        IReadOnlyList<CoppiaDuplicati>? attese = await CoppieAttese.LeggiAsync(loggerFactory.CreateLogger(typeof(AntifrodeEndpoints)), cancellationToken);
 
         return TypedResults.Ok(await antifrode.ScansionaAsync(richiesta.Mesi, richiesta.Soglia, attese, cancellationToken));
-    }
-
-    /// <summary>
-    /// Il file si cerca nella cartella <c>data/</c> della radice del repository, come fa la CLI: l'API gira sempre dai sorgenti.
-    /// Se manca, il fraud-scan va comunque, senza valutazione.
-    /// </summary>
-    private static async Task<IReadOnlyList<CoppiaDuplicati>?> LeggiAtteseAsync(ILogger logger, CancellationToken cancellationToken)
-    {
-        try
-        {
-            string percorso = Path.Combine(DuplicatiAttesiFile.CartellaDati(AppContext.BaseDirectory), DuplicatiAttesiFile.NomeFile);
-
-            return File.Exists(percorso) ? (await DuplicatiAttesiFile.LeggiAsync(percorso, cancellationToken)).Coppie : null;
-        }
-        catch (InvalidOperationException exception)
-        {
-            logger.LogWarning(exception, "Coppie attese non disponibili: fraud-scan senza valutazione");
-
-            return null;
-        }
     }
 }

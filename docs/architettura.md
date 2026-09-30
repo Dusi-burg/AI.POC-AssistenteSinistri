@@ -148,7 +148,9 @@ i template del seed ripetono le stesse descrizioni.
   browser e salva l'esito in memoria; la pagina carica `/?esito={id}`, disegnata da Razor. Senza JavaScript il form funziona con un
   POST classico.
 - **Web**: pagine Pre-istruttoria (scenari 1–4, articoli citati che aprono il testo della clausola, antifrode, statistiche, tempi,
-  link alla traccia nel dashboard, download Markdown), Clausole, Storico, Sinistro, Antifrode, Stato. Due client HTTP: letture con il
+  link alla traccia nel dashboard, download Markdown), Clausole, Storico, Sinistro, Antifrode, Stato; menu **Dati demo** (Fase 9b) con
+  il catalogo delle clausole, le polizze e lo storico dei sinistri paginato e filtrabile. Il catalogo è anche in `docs/clausole.md`,
+  generato con `export-clausole` e verificato da un test contro il seed. Due client HTTP: letture con il
   resilience handler standard, pre-istruttoria e fraud-scan senza retry e con timeout di 5 minuti.
 
 ## 10. Valutazione
@@ -236,5 +238,7 @@ Sezione `Retrieval` di `appsettings.json` (Api e Cli): `TopClausole` 5, `Distanz
   incoerente ma non lo corregge (`fase-6.md` §9 bis).
 - **Esito di perizia nel vettore del sinistro**: utile al fraud-scan, di ostacolo al confronto con una denuncia nuova; oggi risolto con
   un secondo vettore.
-- **Scala**: ricerca esatta senza indice vettoriale, adeguata a centinaia di righe; DiskANN e `VECTOR_SEARCH` sono nella Fase 10.
+- **Scala**: ricerca esatta senza indice vettoriale. Il banco della Fase 10.1 (`fase-10.md` §10.1 bis) misura 96 ms di media a 50.000
+  sinistri; l'indice DiskANN con `VECTOR_SEARCH` e `TOP_N` = 20×k dà gli stessi risultati in 14 ms, ma su SQL Server 2025 è in anteprima,
+  applica i filtri dopo la ricerca approssimata e rende la tabella di sola lettura: per questo non è nel DB della demo.
 - **CI**: se la LocalDB del runner non è SQL Server 2025 i test di integrazione vengono saltati, restano obbligatori in locale.
