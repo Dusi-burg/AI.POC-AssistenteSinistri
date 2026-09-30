@@ -10,6 +10,9 @@ public sealed class DettaglioModel(SinistriApiClient api) : PageModel
 {
     public SinistroDettaglio? Sinistro { get; private set; }
 
+    /// <summary>Gemello tra le coppie di quasi-duplicati attese dal seed (fase-9b.md §3.4), se c'è.</summary>
+    public string? Gemello { get; private set; }
+
     public string? Errore { get; private set; }
 
     public async Task<IActionResult> OnGetAsync(string? numero, CancellationToken cancellationToken)
@@ -27,6 +30,10 @@ public sealed class DettaglioModel(SinistriApiClient api) : PageModel
             {
                 Errore = $"Il sinistro {numero} non esiste.";
                 Response.StatusCode = StatusCodes.Status404NotFound;
+            }
+            else
+            {
+                Gemello = await api.GetGemelloAsync(Sinistro.Numero, cancellationToken);
             }
         }
         catch (ApiProblemaException problema)

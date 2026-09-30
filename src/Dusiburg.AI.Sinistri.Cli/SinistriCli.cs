@@ -27,7 +27,9 @@ internal static class SinistriCli
             SearchCommands.Sinistri(services),
             AskCommand.Create(services),
             FraudScanCommand.Create(services),
-            EvalCommand.Create(services)
+            EvalCommand.Create(services),
+            BenchSearchCommand.Create(services),
+            ExportClausoleCommand.Create(services)
         };
 
         return await root.Parse(args).InvokeAsync();

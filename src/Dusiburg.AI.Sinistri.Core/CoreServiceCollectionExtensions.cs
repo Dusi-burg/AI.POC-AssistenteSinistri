@@ -1,4 +1,5 @@
 using Dusiburg.AI.Sinistri.Core.Antifrode;
+using Dusiburg.AI.Sinistri.Core.Benchmark;
 using Dusiburg.AI.Sinistri.Core.Health;
 using Dusiburg.AI.Sinistri.Core.Options;
 using Dusiburg.AI.Sinistri.Core.Retrieval;
@@ -28,6 +29,7 @@ public static class CoreServiceCollectionExtensions
         services.AddSingleton<RicercaService>();
         services.AddSingleton<AntifrodeService>();
         services.AddSingleton<EvalService>();
+        services.AddSingleton<BenchRicercaService>();
 
         return services;
     }

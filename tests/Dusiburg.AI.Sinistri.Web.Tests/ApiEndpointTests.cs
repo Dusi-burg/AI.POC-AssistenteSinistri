@@ -173,6 +173,33 @@ public class ApiEndpointTests
     }
 
     [Test]
+    public async Task Sinistri_ValidazioneEPaginazione()
+    {
+        //SETUP
+        var consultazione = new ConsultazioneFinta();
+        await using WebApplicationFactory<ApiEntryPoint> factory = ApiFinta.Crea(
+            services => ApiFinta.Sostituisci<IConsultazioneRepository>(services, consultazione), SqlOk);
+        using HttpClient client = factory.CreateClient();
+
+        //SUT
+        Pagina<SinistroElenco>? pagina = await client.GetFromJsonAsync<Pagina<SinistroElenco>>(
+            "/api/sinistri?prodotto=CasaFabbricati&stato=Chiuso&provincia=mi&anno=2026&riparatore=6&polizza=CF-DEMO-000001&testo=quadro&pagina=2&dimensione=10",
+            SinistriJson.Opzioni, CancellationToken);
+        HttpResponseMessage paginaZero = await client.GetAsync("/api/sinistri?pagina=0", CancellationToken);
+        HttpResponseMessage troppe = await client.GetAsync("/api/sinistri?dimensione=500", CancellationToken);
+        HttpResponseMessage provincia = await client.GetAsync("/api/sinistri?provincia=MIL", CancellationToken);
+        await client.GetAsync("/api/sinistri", CancellationToken);
+
+        Assert.That(pagina, Has.Property(nameof(Pagina<SinistroElenco>.Numero)).EqualTo(2).And.Property(nameof(Pagina<SinistroElenco>.Totale)).EqualTo(1));
+        Assert.That(new[] { paginaZero.StatusCode, troppe.StatusCode, provincia.StatusCode }, Has.All.EqualTo(HttpStatusCode.BadRequest));
+        Assert.That(consultazione.Elenchi, Is.EqualTo(new[]
+        {
+            (new FiltriElencoSinistri(Prodotto.CasaFabbricati, null, StatoSinistro.Chiuso, "mi", 2026, 6, "CF-DEMO-000001", "quadro"), 2, 10),
+            (new FiltriElencoSinistri(), 1, Paginazione.DimensioneDefault)
+        }));
+    }
+
+    [Test]
     public async Task Markdown_StessoRendererDellaCli()
     {
         //SETUP

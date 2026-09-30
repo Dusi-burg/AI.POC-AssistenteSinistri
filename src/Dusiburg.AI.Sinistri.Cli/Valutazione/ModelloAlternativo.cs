@@ -1,13 +1,11 @@
 using System.Text.RegularExpressions;
-using Dusiburg.AI.Sinistri.Ai;
-using Dusiburg.AI.Sinistri.Core;
+using Dusiburg.AI.Sinistri.Cli.Configuration;
 using Dusiburg.AI.Sinistri.Core.Embedding;
 using Dusiburg.AI.Sinistri.Core.Options;
 using Dusiburg.AI.Sinistri.Data;
 using Dusiburg.AI.Sinistri.Data.Embedding;
 using Dusiburg.AI.Sinistri.Data.Schema;
 using Dusiburg.AI.Sinistri.Data.Seed;
-using Dusiburg.AI.Sinistri.Ingestion;
 using Dusiburg.AI.Sinistri.Ingestion.Embedding;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
@@ -28,35 +26,13 @@ internal sealed class ModelloAlternativo(string modello, string provider, int di
     public string Database { get; } = $"{PrefissoDatabase}{Normalizza(provider)}_{Normalizza(modello)}";
 
     /// <summary>Servizi con le manopole del modello alternativo e la connection string del suo database.</summary>
-    public ServiceProvider CreaServizi(IConfiguration configurazione, ILoggerFactory loggerFactory)
-    {
-        var connessione = new SqlConnectionStringBuilder(configurazione.GetConnectionString(SqlConnectionFactory.ConnectionStringName)
-            ?? throw new InvalidOperationException($"ConnectionStrings:{SqlConnectionFactory.ConnectionStringName} non configurata."))
+    public ServiceProvider CreaServizi(IConfiguration configurazione, ILoggerFactory loggerFactory) =>
+        ServiziSovrascritti.Crea(configurazione, loggerFactory, Database, new Dictionary<string, string?>
         {
-            InitialCatalog = Database
-        };
-
-        IConfiguration sovrascritta = new ConfigurationBuilder()
-            .AddConfiguration(configurazione)
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                [$"ConnectionStrings:{SqlConnectionFactory.ConnectionStringName}"] = connessione.ConnectionString,
-                [SinistriOptions.Keys.EmbeddingModel] = modello,
-                [SinistriOptions.Keys.EmbeddingProvider] = provider,
-                [SinistriOptions.Keys.EmbeddingDimensions] = dimensioni.ToString(System.Globalization.CultureInfo.InvariantCulture)
-            })
-            .Build();
-
-        var services = new ServiceCollection();
-        services.AddSingleton(loggerFactory);
-        services.AddLogging();
-        services.AddSinistriCore(sovrascritta);
-        services.AddSinistriData(sovrascritta);
-        services.AddSinistriAi(sovrascritta);
-        services.AddSinistriIngestion(sovrascritta);
-
-        return services.BuildServiceProvider();
-    }
+            [SinistriOptions.Keys.EmbeddingModel] = modello,
+            [SinistriOptions.Keys.EmbeddingProvider] = provider,
+            [SinistriOptions.Keys.EmbeddingDimensions] = dimensioni.ToString(System.Globalization.CultureInfo.InvariantCulture)
+        });
 
     /// <summary>
     /// Prima una chiamata di prova (modello installato, dimensione uguale a <c>--embedding-dimensions</c>), poi il DB: riusato se ha già

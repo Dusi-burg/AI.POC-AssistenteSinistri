@@ -1,0 +1,32 @@
+@model Dusiburg.AI.Sinistri.Web.Pages.Dati.PaginazioneVista
+@using Dusiburg.AI.Sinistri.Web.Pages.Dati
+@{
+    int da = Math.Max(1, Model.Numero - 2);
+    int a = Math.Min(Model.Pagine, Model.Numero + 2);
+}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 my-2">
+    <span class="text-muted small">@Model.Totale.ToString("N0", Formati.Italiano) @Model.Etichetta · pagina @Model.Numero di @Model.Pagine</span>
+    @if (Model.Pagine > 1)
+    {
+        <nav aria-label="Pagine">
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item @(Model.Numero == 1 ? "disabled" : "")"><a class="page-link" href="@Paginatore.Url(Context.Request, Model.Numero - 1)">‹</a></li>
+                @if (da > 1)
+                {
+                    <li class="page-item"><a class="page-link" href="@Paginatore.Url(Context.Request, 1)">1</a></li>
+                    @if (da > 2) { <li class="page-item disabled"><span class="page-link">…</span></li> }
+                }
+                @for (int p = da; p <= a; p++)
+                {
+                    <li class="page-item @(p == Model.Numero ? "active" : "")"><a class="page-link" href="@Paginatore.Url(Context.Request, p)">@p</a></li>
+                }
+                @if (a < Model.Pagine)
+                {
+                    @if (a < Model.Pagine - 1) { <li class="page-item disabled"><span class="page-link">…</span></li> }
+                    <li class="page-item"><a class="page-link" href="@Paginatore.Url(Context.Request, Model.Pagine)">@Model.Pagine</a></li>
+                }
+                <li class="page-item @(Model.Numero == Model.Pagine ? "disabled" : "")"><a class="page-link" href="@Paginatore.Url(Context.Request, Model.Numero + 1)">›</a></li>
+            </ul>
+        </nav>
+    }
+</div>

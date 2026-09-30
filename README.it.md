@@ -123,6 +123,8 @@ Non ci sono migration: dopo una modifica allo schema si riesegue `DbInit`, poi `
 | `ask "<denuncia>" --polizza <numero> [--data-evento] [--causa] [--riparatore] [--out file.md] [--raw]` | Scheda di pre-istruttoria in Markdown |
 | `fraud-scan [--mesi 12] [--soglia] [--valuta]` | Coppie di quasi-duplicati e precision/recall sulle coppie attese |
 | `eval [--top 5] [--embedding-model <m> --embedding-provider <p> --embedding-dimensions <n>]` | Valutazione sul golden set, report in `eval/` |
+| `export-clausole [--out docs/clausole.md]` | Scrive il catalogo delle clausole in Markdown ([docs/clausole.md](docs/clausole.md)) |
+| `bench-search [--sinistri 50000] [--ripetizioni 50] [--k 10]` | Scansione esatta contro indice DiskANN con `VECTOR_SEARCH` su un DB dedicato, report in `eval/` |
 
 ## Valutazione
 
@@ -151,14 +153,18 @@ mano; nessun test chiama Ollama. La CI li salta quando la LocalDB del runner è 
 ## Limiti noti e sviluppi possibili
 
 - I dati generati da template aumentano i falsi positivi del fraud-scan; il modello a volte ripete un articolo in due voci (segnalato, non corretto).
-- Ricerca vettoriale esatta senza indice, adeguata a centinaia di righe; DiskANN con `VECTOR_SEARCH`, embedding in T-SQL, ricerca
-  ibrida con full-text e Reciprocal Rank Fusion e un agente con tool calling sono la Fase 10, facoltativa.
+- Ricerca vettoriale esatta senza indice. La Fase 10.1 l'ha misurata a 50.000 sinistri: 96 ms di media, contro 14 ms di un indice
+  DiskANN con `VECTOR_SEARCH` (`TOP_N` = 20×k, stessi risultati). Su SQL Server 2025 l'indice è in anteprima, applica i filtri dopo
+  la ricerca approssimata e rende la tabella di sola lettura: per questo il DB della demo non lo usa.
+- Embedding in T-SQL, ricerca ibrida con full-text e Reciprocal Rank Fusion, reranker e agente con tool calling sono le altre
+  estensioni facoltative della Fase 10.
 
 ## Documentazione
 
 - [docs/il-progetto-in-breve.md](docs/il-progetto-in-breve.md) — che cosa fa l'assistente e perché ci si può fidare, per chi non sviluppa.
 - [docs/architettura.md](docs/architettura.md) — la specifica, fonte di verità.
 - [docs/demo.md](docs/demo.md) — preparazione, scenari e scaletta di una demo di 15 minuti.
+- [docs/clausole.md](docs/clausole.md) — il catalogo delle 60 clausole di polizza (fittizie), generato dal database.
 - `docs/PLAN.md` e `docs/fase-*.md` — il piano per fasi con l'esito di ciascuna.
 
 ## Licenza
