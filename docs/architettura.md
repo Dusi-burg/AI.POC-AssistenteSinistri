@@ -178,6 +178,7 @@ gli stessi user-secrets. Senza valore vale il default del codice (`SinistriOptio
 | `OLLAMA_ENDPOINT` | `http://127.0.0.1:11434` | 127.0.0.1 e non localhost: evita ~2 s per il tentativo IPv6 |
 | `OLLAMA_CHAT_MODEL` | `qwen3.5:9b` | sempre su GPU |
 | `OLLAMA_NUM_CTX` | `8192` | prompt ~2.000 token più la risposta |
+| `OLLAMA_NUM_GPU` | `99` | layer della chat in GPU (tutti): da Ollama 0.40 il margine automatico di VRAM ne lascerebbe uno sulla CPU; `auto` lascia decidere a Ollama |
 | `EMBEDDING_PROVIDER` | `ollama` | anche `openai-compatible` (NPU); `onnx` solo nel banco di prova |
 | `EMBEDDING_ENDPOINT` | `OLLAMA_ENDPOINT` | |
 | `EMBEDDING_MODEL` | `embeddinggemma` | scelto al CHECKPOINT 1b, confermato dal golden set |

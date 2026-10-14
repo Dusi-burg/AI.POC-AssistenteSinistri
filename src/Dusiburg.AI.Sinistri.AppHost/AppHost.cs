@@ -16,6 +16,7 @@ api.WithConfigurationEnvironment(
     "OLLAMA_ENDPOINT",
     "OLLAMA_CHAT_MODEL",
     "OLLAMA_NUM_CTX",
+    "OLLAMA_NUM_GPU",
     "EMBEDDING_PROVIDER",
     "EMBEDDING_ENDPOINT",
     "EMBEDDING_MODEL",

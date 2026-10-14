@@ -15,6 +15,7 @@ public class SinistriOptionsTests
         Assert.That(options.OllamaEndpoint, Is.EqualTo(new Uri("http://127.0.0.1:11434")));
         Assert.That(options.OllamaChatModel, Is.EqualTo("qwen3.5:9b"));
         Assert.That(options.OllamaContextLength, Is.EqualTo(8_192));
+        Assert.That(options.OllamaNumGpu, Is.EqualTo(99), "chat tutta in GPU anche con il margine di VRAM di Ollama 0.40");
         Assert.That(options.EmbeddingProvider, Is.EqualTo(EmbeddingProviders.Ollama));
         Assert.That(options.EmbeddingEndpoint, Is.EqualTo(options.OllamaEndpoint));
         Assert.That(options.EmbeddingModel, Is.EqualTo("embeddinggemma"), "scelta del CHECKPOINT 1b");
@@ -36,6 +37,7 @@ public class SinistriOptionsTests
             ["EMBEDDING_MODEL"] = "qwen3-embedding:0.6b",
             ["EMBEDDING_DIMENSIONS"] = "1024",
             ["EMBEDDING_NUM_GPU"] = "auto",
+            ["OLLAMA_NUM_GPU"] = "auto",
             ["SOGLIA_DUPLICATO_COSINE"] = "0.12",
             ["SOGLIA_DUPLICATO_DENUNCIA"] = "0.1",
             ["SINISTRI_WARMUP"] = "false"
@@ -48,6 +50,7 @@ public class SinistriOptionsTests
         Assert.That(options.EmbeddingModel, Is.EqualTo("qwen3-embedding:0.6b"));
         Assert.That(options.EmbeddingDimensions, Is.EqualTo(1024));
         Assert.That(options.EmbeddingNumGpu, Is.Null, "auto lascia la scelta a Ollama");
+        Assert.That(options.OllamaNumGpu, Is.Null, "auto lascia la scelta a Ollama");
         Assert.That(options.SogliaDuplicatoCosine, Is.EqualTo(0.12));
         Assert.That(options.SogliaDuplicatoDenuncia, Is.EqualTo(0.1));
         Assert.That(options.Warmup, Is.False);
@@ -119,6 +122,7 @@ public class SinistriOptionsTests
 
     [TestCase("OLLAMA_ENDPOINT", "localhost:11434")]
     [TestCase("OLLAMA_NUM_CTX", "512")]
+    [TestCase("OLLAMA_NUM_GPU", "tutti")]
     [TestCase("SOGLIA_DUPLICATO_COSINE", "0,08")]
     [TestCase("SOGLIA_DUPLICATO_DENUNCIA", "3")]
     [TestCase("SINISTRI_WARMUP", "si")]
