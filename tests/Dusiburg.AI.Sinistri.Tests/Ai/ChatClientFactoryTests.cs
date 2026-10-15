@@ -24,6 +24,19 @@ public class ChatClientFactoryTests
         Assert.That(model.DefaultOptions.Temperature, Is.EqualTo(0.1f));
         Assert.That(model.DefaultOptions.AdditionalProperties?[OllamaOption.Think.Name], Is.EqualTo(false));
         Assert.That(model.DefaultOptions.AdditionalProperties?[OllamaOption.NumCtx.Name], Is.EqualTo(12_288));
+        Assert.That(model.DefaultOptions.AdditionalProperties?[OllamaOption.NumGpu.Name], Is.EqualTo(SinistriOptions.DefaultOllamaNumGpu));
+    }
+
+    [Test]
+    public void Create_NumGpuAuto_SceltaLasciataAOllama()
+    {
+        //SETUP
+        var factory = new ChatClientFactory(Options(new() { ["OLLAMA_NUM_GPU"] = "auto" }), NullLoggerFactory.Instance);
+
+        //SUT
+        using ChatModel model = factory.Create();
+
+        Assert.That(model.DefaultOptions.AdditionalProperties?.ContainsKey(OllamaOption.NumGpu.Name), Is.False);
     }
 
     [Test]

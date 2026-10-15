@@ -35,16 +35,22 @@ public sealed class ChatClientFactory(SinistriOptions options, ILoggerFactory lo
             builder.Use(client => new PromptCaptureChatClient(client, captureDirectory));
         }
 
-        return new ChatModel(builder.Build(), options.OllamaChatModel, DefaultOptions(options.OllamaContextLength));
+        return new ChatModel(builder.Build(), options.OllamaChatModel, DefaultOptions(options.OllamaContextLength, options.OllamaNumGpu));
     }
 
-    internal static ChatOptions DefaultOptions(int contextLength)
+    /// <summary>Stesse opzioni per warm-up e richieste: un <c>num_gpu</c> diverso farebbe ricaricare il modello a Ollama.</summary>
+    internal static ChatOptions DefaultOptions(int contextLength, int? numGpu)
     {
         var defaults = new ChatOptions { Temperature = 0.1f, MaxOutputTokens = MaxOutputTokens };
 
         // Qwen 3.5 con il thinking attivo consuma token e tempo senza migliorare una scheda strutturata.
         defaults.AddOllamaOption(OllamaOption.Think, false);
         defaults.AddOllamaOption(OllamaOption.NumCtx, contextLength);
+
+        if (numGpu is int layers)
+        {
+            defaults.AddOllamaOption(OllamaOption.NumGpu, layers);
+        }
 
         return defaults;
     }

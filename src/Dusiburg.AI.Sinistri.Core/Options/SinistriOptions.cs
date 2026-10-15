@@ -25,6 +25,7 @@ public sealed record SinistriOptions(
     Uri OllamaEndpoint,
     string OllamaChatModel,
     int OllamaContextLength,
+    int? OllamaNumGpu,
     string EmbeddingProvider,
     Uri EmbeddingEndpoint,
     string EmbeddingModel,
@@ -43,6 +44,12 @@ public sealed record SinistriOptions(
 
     /// <summary>Con 8 GB di VRAM Ollama sceglierebbe 4096 token, pochi per il prompt della scheda (~3–4k token) più la risposta.</summary>
     public const int DefaultContextLength = 8_192;
+
+    /// <summary>
+    /// Layer della chat in GPU (99 = tutti). Da Ollama 0.40 il runner tiene libero un margine di ~1,9 GB di VRAM e su 8 GB lascia un
+    /// layer sulla CPU; con il numero esplicito qwen3.5:9b sta tutto in GPU (~+25% di token/s, misurato il 2026-10-14).
+    /// </summary>
+    public const int DefaultOllamaNumGpu = 99;
 
     /// <summary>
     /// Scelto al CHECKPOINT 1b (opzione A, fase-1b.md §7 bis): sul banco di prova ha la qualità migliore (MRR 0,785 contro
@@ -70,7 +77,7 @@ public sealed record SinistriOptions(
     /// </summary>
     public const double DefaultSogliaDuplicatoDenuncia = 0.07;
 
-    /// <summary>Valore di <c>EMBEDDING_NUM_GPU</c> che lascia la scelta a Ollama.</summary>
+    /// <summary>Valore di <c>OLLAMA_NUM_GPU</c> ed <c>EMBEDDING_NUM_GPU</c> che lascia la scelta a Ollama.</summary>
     public const string AutomaticNumGpu = "auto";
 
     public static class Keys
@@ -78,6 +85,7 @@ public sealed record SinistriOptions(
         public const string OllamaEndpoint = "OLLAMA_ENDPOINT";
         public const string OllamaChatModel = "OLLAMA_CHAT_MODEL";
         public const string OllamaNumCtx = "OLLAMA_NUM_CTX";
+        public const string OllamaNumGpu = "OLLAMA_NUM_GPU";
         public const string EmbeddingProvider = "EMBEDDING_PROVIDER";
         public const string EmbeddingEndpoint = "EMBEDDING_ENDPOINT";
         public const string EmbeddingModel = "EMBEDDING_MODEL";
@@ -92,7 +100,7 @@ public sealed record SinistriOptions(
         /// <summary>Tutte le manopole, nell'ordine in cui l'AppHost le inoltra all'API.</summary>
         public static readonly IReadOnlyList<string> All =
         [
-            OllamaEndpoint, OllamaChatModel, OllamaNumCtx,
+            OllamaEndpoint, OllamaChatModel, OllamaNumCtx, OllamaNumGpu,
             EmbeddingProvider, EmbeddingEndpoint, EmbeddingModel, EmbeddingNumGpu, EmbeddingOnnxPath, EmbeddingDimensions,
             SogliaDuplicatoCosine, SogliaDuplicatoDenuncia, PromptCaptureDirectory, Warmup
         ];
@@ -119,10 +127,11 @@ public sealed record SinistriOptions(
             ollamaEndpoint,
             NonEmpty(configuration[Keys.OllamaChatModel]) ?? DefaultChatModel,
             ReadInt(configuration, Keys.OllamaNumCtx, DefaultContextLength, minimum: 1_024, maximum: 262_144),
+            ReadNumGpu(configuration, Keys.OllamaNumGpu, DefaultOllamaNumGpu),
             provider,
             embeddingEndpoint ?? ollamaEndpoint,
             NonEmpty(configuration[Keys.EmbeddingModel]) ?? DefaultEmbeddingModel,
-            ReadNumGpu(configuration),
+            ReadNumGpu(configuration, Keys.EmbeddingNumGpu, DefaultEmbeddingNumGpu),
             onnxPath,
             ReadInt(configuration, Keys.EmbeddingDimensions, DefaultEmbeddingDimensions, minimum: 1, maximum: MaxEmbeddingDimensions),
             ReadDouble(configuration, Keys.SogliaDuplicatoCosine, DefaultSogliaDuplicatoCosine, minimum: 0, maximum: 2),
@@ -140,18 +149,18 @@ public sealed record SinistriOptions(
             : throw Invalid($"{Keys.EmbeddingProvider} '{provider}' non supportato: usare {string.Join(", ", EmbeddingProviders.All)}.");
     }
 
-    private static int? ReadNumGpu(IConfiguration configuration)
+    private static int? ReadNumGpu(IConfiguration configuration, string key, int defaultValue)
     {
-        string? value = NonEmpty(configuration[Keys.EmbeddingNumGpu]);
+        string? value = NonEmpty(configuration[key]);
 
         if (value is null)
         {
-            return DefaultEmbeddingNumGpu;
+            return defaultValue;
         }
 
         return value.Equals(AutomaticNumGpu, StringComparison.OrdinalIgnoreCase)
             ? null
-            : ReadInt(configuration, Keys.EmbeddingNumGpu, DefaultEmbeddingNumGpu, minimum: 0, maximum: 999);
+            : ReadInt(configuration, key, defaultValue, minimum: 0, maximum: 999);
     }
 
     private static Uri? ReadUri(IConfiguration configuration, string key)

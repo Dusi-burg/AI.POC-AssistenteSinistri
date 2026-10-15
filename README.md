@@ -88,6 +88,7 @@ the code default applies.
 | `OLLAMA_ENDPOINT` | `http://127.0.0.1:11434` |
 | `OLLAMA_CHAT_MODEL` | `qwen3.5:9b` |
 | `OLLAMA_NUM_CTX` | `8192` |
+| `OLLAMA_NUM_GPU` | `99` (chat fully on the GPU; `auto` = Ollama decides) |
 | `EMBEDDING_PROVIDER` / `EMBEDDING_MODEL` / `EMBEDDING_DIMENSIONS` | `ollama` / `embeddinggemma` / `768` |
 | `EMBEDDING_NUM_GPU` | `0` (CPU) |
 | `SOGLIA_DUPLICATO_COSINE` | `0.05` (fraud scan between claims) |
