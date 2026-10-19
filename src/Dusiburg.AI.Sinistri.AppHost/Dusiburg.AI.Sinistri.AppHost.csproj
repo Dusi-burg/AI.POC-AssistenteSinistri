@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MessagePack" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Dusiburg.AI.Sinistri.Api\Dusiburg.AI.Sinistri.Api.csproj" />
     <ProjectReference Include="..\Dusiburg.AI.Sinistri.Web\Dusiburg.AI.Sinistri.Web.csproj" />
   </ItemGroup>
