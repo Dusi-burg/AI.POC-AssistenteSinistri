@@ -1,8 +1,8 @@
 # AI.POC-AssistenteSinistri
 
-> 🇬🇧 **English** · 🇮🇹 [Italiano](README.it.md)
-
 [![CI](https://github.com/Dusi-burg/AI.POC-AssistenteSinistri/actions/workflows/ci.yml/badge.svg)](https://github.com/Dusi-burg/AI.POC-AssistenteSinistri/actions/workflows/ci.yml)
+
+*[Leggi in italiano](README.it.md)*
 
 A **fully local RAG** proof of concept for insurance claims: given a claim notice written in free text and a policy number, it prepares
 a **pre-assessment sheet** for the claims handler — the policy clauses that apply, the exclusions to check, the deductible, the questions

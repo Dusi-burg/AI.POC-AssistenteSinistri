@@ -1,8 +1,8 @@
 # AI.POC-AssistenteSinistri
 
-> 🇬🇧 [English](README.md) · 🇮🇹 **Italiano**
-
 [![CI](https://github.com/Dusi-burg/AI.POC-AssistenteSinistri/actions/workflows/ci.yml/badge.svg)](https://github.com/Dusi-burg/AI.POC-AssistenteSinistri/actions/workflows/ci.yml)
+
+*[Read in English](README.md)*
 
 Proof of concept di **RAG interamente locale** per i sinistri assicurativi: dato il testo libero di una denuncia e un numero di polizza,
 prepara per il liquidatore una **scheda di pre-istruttoria** — le clausole che operano, le esclusioni da verificare, la franchigia, le
