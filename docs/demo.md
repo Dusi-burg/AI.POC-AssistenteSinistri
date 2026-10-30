@@ -12,6 +12,7 @@ dotnet run --project src/Dusiburg.AI.Sinistri.Cli -- embed      # 880 vettori su
 dotnet run --project src/Dusiburg.AI.Sinistri.AppHost           # api + web + dashboard
 ```
 
+- Se Ollama non è in esecuzione lo avvia l'AppHost, e lo ferma alla chiusura.
 - Dal dashboard di Aspire si apre la Web (`http://localhost:5202`). `api` e `web` devono essere sane; la pagina **Stato** della Web
   deve essere tutta verde, con l'embedding su CPU e la chat su GPU nel controllo "Posizionamento modelli".
 - L'API fa un **warm-up** all'avvio (un embedding e una risposta minima): il primo utente non aspetta il caricamento del modello di
