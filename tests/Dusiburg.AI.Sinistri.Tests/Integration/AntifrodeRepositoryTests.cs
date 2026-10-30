@@ -96,11 +96,11 @@ public class AntifrodeRepositoryTests
 
         //SUT
         IReadOnlyList<SegnalazioneDuplicato> senzaRiparatore = await _repository.CercaDuplicatiDenunciaAsync(
-            denuncia, "CF-TEST-000001", riparatoreId: null, mesi: 12, soglia: 0.05, top: 20, CancellationToken);
+            denuncia, "CF-TEST-000001", riparatoreId: null, mesi: 12, soglia: 0.05, sogliaPolizza: 0.05, top: 20, CancellationToken);
         IReadOnlyList<SegnalazioneDuplicato> conRiparatore = await _repository.CercaDuplicatiDenunciaAsync(
-            denuncia, "CF-TEST-000001", RiparatoreR2, mesi: 12, soglia: 0.05, top: 20, CancellationToken);
+            denuncia, "CF-TEST-000001", RiparatoreR2, mesi: 12, soglia: 0.05, sogliaPolizza: 0.05, top: 20, CancellationToken);
         IReadOnlyList<SegnalazioneDuplicato> primo = await _repository.CercaDuplicatiDenunciaAsync(
-            denuncia, "CF-TEST-000001", RiparatoreR1, mesi: 12, soglia: 0.05, top: 1, CancellationToken);
+            denuncia, "CF-TEST-000001", RiparatoreR1, mesi: 12, soglia: 0.05, sogliaPolizza: 0.05, top: 1, CancellationToken);
 
         Assert.That(senzaRiparatore.Select(s => (s.NumeroSinistro, s.Motivo)), Is.EqualTo(new[]
         {
@@ -122,6 +122,27 @@ public class AntifrodeRepositoryTests
             ("A-3", MotivoSegnalazione.SoloTestoSimile),
         }));
         Assert.That(primo.Select(s => s.NumeroSinistro), Is.EqualTo(new[] { "A-1" }));
+    }
+
+    [Test]
+    public async Task ControllaDenuncia_SogliaPolizza_SoloPerLaPolizzaIndicata()
+    {
+        //SETUP
+        // Distanze dalla denuncia: A-3 0,031, A-2 0,095, A-1 0,142. A-1 e A-2 sono di CF-TEST-000001, A-3 di RP-TEST-000002.
+        float[] denuncia = [1f, 0.6f, 0f, 0f];
+
+        //SUT
+        IReadOnlyList<SegnalazioneDuplicato> stessaPolizza = await _repository.CercaDuplicatiDenunciaAsync(
+            denuncia, "CF-TEST-000001", riparatoreId: null, mesi: 12, soglia: 0.05, sogliaPolizza: 0.12, top: 20, CancellationToken);
+        IReadOnlyList<SegnalazioneDuplicato> altraPolizza = await _repository.CercaDuplicatiDenunciaAsync(
+            denuncia, "RP-TEST-000002", riparatoreId: null, mesi: 12, soglia: 0.05, sogliaPolizza: 0.12, top: 20, CancellationToken);
+
+        Assert.That(stessaPolizza.Select(s => (s.NumeroSinistro, s.Motivo)), Is.EqualTo(new[]
+        {
+            ("A-2", MotivoSegnalazione.StessoContraente),
+            ("A-3", MotivoSegnalazione.SoloTestoSimile),
+        }), "A-2 entra per la soglia di polizza, A-1 resta fuori da entrambe");
+        Assert.That(altraPolizza.Select(s => s.NumeroSinistro), Is.EqualTo(new[] { "A-3" }), "per A-2 vale la soglia generale");
     }
 
     [Test]

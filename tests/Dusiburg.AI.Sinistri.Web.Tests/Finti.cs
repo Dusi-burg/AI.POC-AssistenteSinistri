@@ -150,7 +150,7 @@ internal sealed class SinistriFinti : ISinistroRepository
 internal sealed class AntifrodeFinto : IAntifrodeRepository
 {
     public Task<IReadOnlyList<SegnalazioneDuplicato>> CercaDuplicatiDenunciaAsync(
-        float[] vettoreDenuncia, string numeroPolizza, int? riparatoreId, int mesi, double soglia, int top, CancellationToken cancellationToken) =>
+        float[] vettoreDenuncia, string numeroPolizza, int? riparatoreId, int mesi, double soglia, double sogliaPolizza, int top, CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyList<SegnalazioneDuplicato>>([DatiDemo.Duplicato]);
 
     public Task<IReadOnlyList<CoppiaSospetta>> CercaCoppieAsync(int mesi, double soglia, CancellationToken cancellationToken) =>

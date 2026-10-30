@@ -63,7 +63,7 @@ public static partial class CitazioniValidator
         if (clausola.Tipo != atteso)
         {
             avvisi.Add(new Avviso(TipoAvviso.Citazione,
-                $"{clausola.Articolo} ({clausola.Tipo.Descrizione()}) indicato in {sezione}: tipo incoerente, da verificare."));
+                $"{clausola.Articolo} ({clausola.Tipo.Descrizione()}) indicato in {sezione}: tipo incoerente, da verificare se pertinente."));
         }
 
         return clausola;

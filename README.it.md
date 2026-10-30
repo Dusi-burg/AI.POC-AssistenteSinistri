@@ -90,6 +90,7 @@ valore vale il default del codice.
 | `EMBEDDING_NUM_GPU` | `0` (CPU) |
 | `SOGLIA_DUPLICATO_COSINE` | `0.05` (fraud-scan tra sinistri) |
 | `SOGLIA_DUPLICATO_DENUNCIA` | `0.07` (duplicati di una nuova denuncia) |
+| `SOGLIA_DUPLICATO_POLIZZA` | `0.30` (duplicati di una nuova denuncia sulla stessa polizza) |
 | `SINISTRI_PROMPT_CAPTURE_DIR` | non impostata (salva ogni richiesta al modello) |
 | `SINISTRI_WARMUP` | `true` (carica i modelli all'avvio dell'API) |
 

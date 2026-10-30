@@ -64,7 +64,7 @@ public sealed record StatisticheDataset(ConteggioSeed Conteggi, IReadOnlyList<Di
 /// <summary>Modelli, soglie e parametri di retrieval in uso, in sola lettura per la pagina di stato.</summary>
 public sealed record ConfigurazioneDemo(
     string ChatModel, string EmbeddingModel, string EmbeddingProvider, int EmbeddingDimensions,
-    double SogliaDuplicatoCosine, double SogliaDuplicatoDenuncia, RetrievalOptions Retrieval);
+    double SogliaDuplicatoCosine, double SogliaDuplicatoDenuncia, double SogliaDuplicatoPolizza, RetrievalOptions Retrieval);
 
 public sealed record RichiestaRicercaClausole(string Testo, Prodotto Prodotto, int? Top = null);
 

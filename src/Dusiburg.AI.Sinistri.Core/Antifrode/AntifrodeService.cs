@@ -12,7 +12,7 @@ namespace Dusiburg.AI.Sinistri.Core.Antifrode;
 /// Controllo deterministico dei quasi-duplicati (fase-7.md): sulla nuova denuncia (passo 6 della pre-istruttoria) e sui sinistri di un
 /// periodo (<c>fraud-scan</c>). Nessun LLM: l'esito non entra nel prompt. Due vettori e due soglie (fase-7.md §6 bis): tra sinistri
 /// storici il vettore completo e <c>SOGLIA_DUPLICATO_COSINE</c>; tra denuncia e sinistri la sola descrizione e
-/// <c>SOGLIA_DUPLICATO_DENUNCIA</c>.
+/// <c>SOGLIA_DUPLICATO_DENUNCIA</c>, più larga (<c>SOGLIA_DUPLICATO_POLIZZA</c>) per i sinistri della stessa polizza.
 /// </summary>
 public sealed class AntifrodeService(
     IEmbeddingService embeddingService,
@@ -39,7 +39,7 @@ public sealed class AntifrodeService(
 
         return await repository.CercaDuplicatiDenunciaAsync(
             vettori[0], richiesta.NumeroPolizza, richiesta.RiparatoreId, retrieval.Value.MesiControlloDuplicati, opzioni.SogliaDuplicatoDenuncia,
-            MaxSegnalazioni, cancellationToken);
+            opzioni.SogliaDuplicatoPolizza, MaxSegnalazioni, cancellationToken);
     }
 
     /// <summary>

@@ -98,7 +98,7 @@ public class PreIstruttoriaServiceTests
 
         Assert.That(esito.PossibiliDuplicati.Select(d => d.NumeroSinistro), Is.EqualTo(new[] { AntifrodeFinto.Segnalazione.NumeroSinistro }));
         Assert.That(embedding.Documenti, Is.EqualTo(new[] { "Rottura di un tubo in bagno." }), "vettore antifrode: solo il racconto, senza la causa indicata");
-        Assert.That(antifrode.Richieste, Is.EqualTo(new[] { ("CF-DEMO-000001", (int?)6, 24, SinistriOptions.DefaultSogliaDuplicatoDenuncia) }));
+        Assert.That(antifrode.Richieste, Is.EqualTo(new[] { ("CF-DEMO-000001", (int?)6, 24, SinistriOptions.DefaultSogliaDuplicatoDenuncia, SinistriOptions.DefaultSogliaDuplicatoPolizza) }));
         Assert.That(chat.Richieste.SelectMany(r => r.Messaggi).Select(m => m.Text), Has.None.Contains(AntifrodeFinto.Segnalazione.NumeroSinistro));
     }
 
@@ -126,12 +126,12 @@ public class PreIstruttoriaServiceTests
         public static readonly SegnalazioneDuplicato Segnalazione = new("SIN-2026-000123", new DateOnly(2026, 5, 12), CausaSinistro.AcquaCondotta,
             StatoSinistro.Chiuso, "Mario Bianchi", null, 0.02, MotivoSegnalazione.StessoContraente, "Tubo rotto in bagno.");
 
-        public List<(string NumeroPolizza, int? RiparatoreId, int Mesi, double Soglia)> Richieste { get; } = [];
+        public List<(string NumeroPolizza, int? RiparatoreId, int Mesi, double Soglia, double SogliaPolizza)> Richieste { get; } = [];
 
         public Task<IReadOnlyList<SegnalazioneDuplicato>> CercaDuplicatiDenunciaAsync(
-            float[] vettoreDenuncia, string numeroPolizza, int? riparatoreId, int mesi, double soglia, int top, CancellationToken cancellationToken)
+            float[] vettoreDenuncia, string numeroPolizza, int? riparatoreId, int mesi, double soglia, double sogliaPolizza, int top, CancellationToken cancellationToken)
         {
-            Richieste.Add((numeroPolizza, riparatoreId, mesi, soglia));
+            Richieste.Add((numeroPolizza, riparatoreId, mesi, soglia, sogliaPolizza));
 
             return Task.FromResult<IReadOnlyList<SegnalazioneDuplicato>>([Segnalazione]);
         }

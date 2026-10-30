@@ -40,11 +40,12 @@ public sealed record RisultatoFraudScan(
 public interface IAntifrodeRepository
 {
     /// <summary>
-    /// Sinistri denunciati negli ultimi <paramref name="mesi"/>, di qualsiasi prodotto e stato, sotto soglia rispetto alla denuncia.
+    /// Sinistri denunciati negli ultimi <paramref name="mesi"/>, di qualsiasi prodotto e stato, vicini alla denuncia: sotto
+    /// <paramref name="soglia"/>, oppure sotto <paramref name="sogliaPolizza"/> se sono della polizza indicata.
     /// Ordine: stesso contraente, poi stesso riparatore, poi solo testo; a parità per distanza.
     /// </summary>
     Task<IReadOnlyList<SegnalazioneDuplicato>> CercaDuplicatiDenunciaAsync(
-        float[] vettoreDenuncia, string numeroPolizza, int? riparatoreId, int mesi, double soglia, int top, CancellationToken cancellationToken);
+        float[] vettoreDenuncia, string numeroPolizza, int? riparatoreId, int mesi, double soglia, double sogliaPolizza, int top, CancellationToken cancellationToken);
 
     /// <summary>Self-join sui sinistri denunciati negli ultimi <paramref name="mesi"/>: coppie sotto soglia, ordinate per distanza.</summary>
     Task<IReadOnlyList<CoppiaSospetta>> CercaCoppieAsync(int mesi, double soglia, CancellationToken cancellationToken);

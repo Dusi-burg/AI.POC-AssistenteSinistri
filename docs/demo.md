@@ -31,7 +31,7 @@ dotnet user-secrets set OLLAMA_CHAT_MODEL qwen3.5:9b --project src/Dusiburg.AI.S
 dotnet run --project src/Dusiburg.AI.Sinistri.AppHost -- SOGLIA_DUPLICATO_DENUNCIA=0.10
 ```
 
-Utili in demo: `SOGLIA_DUPLICATO_DENUNCIA` e `SOGLIA_DUPLICATO_COSINE` (più o meno segnalazioni), `SINISTRI_PROMPT_CAPTURE_DIR`
+Utili in demo: `SOGLIA_DUPLICATO_DENUNCIA`, `SOGLIA_DUPLICATO_POLIZZA` e `SOGLIA_DUPLICATO_COSINE` (più o meno segnalazioni), `SINISTRI_PROMPT_CAPTURE_DIR`
 (per mostrare il prompt reale inviato al modello), `OLLAMA_ENDPOINT` su una porta sbagliata (per mostrare cosa succede se Ollama è giù).
 
 ## Polizze demo

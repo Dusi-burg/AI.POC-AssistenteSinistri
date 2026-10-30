@@ -17,7 +17,7 @@ namespace Dusiburg.AI.Sinistri.Data.Antifrode;
 public sealed class AntifrodeRepository(SqlConnectionFactory connectionFactory) : IAntifrodeRepository
 {
     public async Task<IReadOnlyList<SegnalazioneDuplicato>> CercaDuplicatiDenunciaAsync(
-        float[] vettoreDenuncia, string numeroPolizza, int? riparatoreId, int mesi, double soglia, int top, CancellationToken cancellationToken)
+        float[] vettoreDenuncia, string numeroPolizza, int? riparatoreId, int mesi, double soglia, double sogliaPolizza, int top, CancellationToken cancellationToken)
     {
         await using SqlConnection connection = connectionFactory.CreateConnection();
 
@@ -25,10 +25,11 @@ public sealed class AntifrodeRepository(SqlConnectionFactory connectionFactory) 
         IEnumerable<RigaDenuncia> righe = await connection.QueryAsync<RigaDenuncia>(new CommandDefinition(
             """
             DECLARE @da date = DATEADD(MONTH, -@mesi, CAST(GETDATE() AS date));
-            DECLARE @contraenteId int = (SELECT ContraenteId FROM dbo.Polizza WHERE Numero = @numeroPolizza);
+            DECLARE @polizzaId int, @contraenteId int;
+            SELECT @polizzaId = Id, @contraenteId = ContraenteId FROM dbo.Polizza WHERE Numero = @numeroPolizza;
 
             WITH Vicini AS (
-                SELECT s.Numero, s.DataDenuncia, s.CausaSinistroId, s.StatoSinistroId, s.Descrizione, s.RiparatoreId, p.ContraenteId,
+                SELECT s.Numero, s.DataDenuncia, s.CausaSinistroId, s.StatoSinistroId, s.Descrizione, s.RiparatoreId, s.PolizzaId, p.ContraenteId,
                        CAST(VECTOR_DISTANCE('cosine', s.EmbeddingAntifrode, @q) AS float) AS Distanza
                 FROM dbo.Sinistro AS s
                 JOIN dbo.Polizza AS p ON p.Id = s.PolizzaId
@@ -44,6 +45,7 @@ public sealed class AntifrodeRepository(SqlConnectionFactory connectionFactory) 
             JOIN dbo.Contraente AS c ON c.Id = v.ContraenteId
             LEFT JOIN dbo.Riparatore AS r ON r.Id = v.RiparatoreId
             WHERE v.Distanza < @soglia
+               OR (v.PolizzaId = @polizzaId AND v.Distanza < @sogliaPolizza)
             ORDER BY StessoContraente DESC, StessoRiparatore DESC, v.Distanza, v.Numero;
             """,
             new
@@ -53,6 +55,7 @@ public sealed class AntifrodeRepository(SqlConnectionFactory connectionFactory) 
                 riparatoreId,
                 mesi,
                 soglia,
+                sogliaPolizza,
                 top
             },
             cancellationToken: cancellationToken));

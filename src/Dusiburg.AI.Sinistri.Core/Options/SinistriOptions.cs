@@ -34,6 +34,7 @@ public sealed record SinistriOptions(
     int EmbeddingDimensions,
     double SogliaDuplicatoCosine,
     double SogliaDuplicatoDenuncia,
+    double SogliaDuplicatoPolizza,
     string? PromptCaptureDirectory,
     bool Warmup)
 {
@@ -77,6 +78,12 @@ public sealed record SinistriOptions(
     /// </summary>
     public const double DefaultSogliaDuplicatoDenuncia = 0.07;
 
+    /// <summary>
+    /// Soglia più larga, solo per i sinistri della polizza indicata: lo stesso danno raccontato con altre parole sta a 0,14-0,26 e la
+    /// soglia generale non lo vede. Valore provato su una sola polizza demo, da ritarare.
+    /// </summary>
+    public const double DefaultSogliaDuplicatoPolizza = 0.30;
+
     /// <summary>Valore di <c>OLLAMA_NUM_GPU</c> ed <c>EMBEDDING_NUM_GPU</c> che lascia la scelta a Ollama.</summary>
     public const string AutomaticNumGpu = "auto";
 
@@ -94,6 +101,7 @@ public sealed record SinistriOptions(
         public const string EmbeddingDimensions = "EMBEDDING_DIMENSIONS";
         public const string SogliaDuplicatoCosine = "SOGLIA_DUPLICATO_COSINE";
         public const string SogliaDuplicatoDenuncia = "SOGLIA_DUPLICATO_DENUNCIA";
+        public const string SogliaDuplicatoPolizza = "SOGLIA_DUPLICATO_POLIZZA";
         public const string PromptCaptureDirectory = "SINISTRI_PROMPT_CAPTURE_DIR";
         public const string Warmup = "SINISTRI_WARMUP";
 
@@ -102,7 +110,7 @@ public sealed record SinistriOptions(
         [
             OllamaEndpoint, OllamaChatModel, OllamaNumCtx, OllamaNumGpu,
             EmbeddingProvider, EmbeddingEndpoint, EmbeddingModel, EmbeddingNumGpu, EmbeddingOnnxPath, EmbeddingDimensions,
-            SogliaDuplicatoCosine, SogliaDuplicatoDenuncia, PromptCaptureDirectory, Warmup
+            SogliaDuplicatoCosine, SogliaDuplicatoDenuncia, SogliaDuplicatoPolizza, PromptCaptureDirectory, Warmup
         ];
     }
 
@@ -136,6 +144,7 @@ public sealed record SinistriOptions(
             ReadInt(configuration, Keys.EmbeddingDimensions, DefaultEmbeddingDimensions, minimum: 1, maximum: MaxEmbeddingDimensions),
             ReadDouble(configuration, Keys.SogliaDuplicatoCosine, DefaultSogliaDuplicatoCosine, minimum: 0, maximum: 2),
             ReadDouble(configuration, Keys.SogliaDuplicatoDenuncia, DefaultSogliaDuplicatoDenuncia, minimum: 0, maximum: 2),
+            ReadDouble(configuration, Keys.SogliaDuplicatoPolizza, DefaultSogliaDuplicatoPolizza, minimum: 0, maximum: 2),
             NonEmpty(configuration[Keys.PromptCaptureDirectory]),
             ReadBool(configuration, Keys.Warmup, defaultValue: true));
     }
