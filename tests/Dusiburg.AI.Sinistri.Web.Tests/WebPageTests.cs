@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using Dusiburg.AI.Sinistri.Core.Antifrode;
 using Dusiburg.AI.Sinistri.Core.Consultazione;
 using Dusiburg.AI.Sinistri.Core.Dominio;
 using Dusiburg.AI.Sinistri.Core.Health;
@@ -205,6 +206,36 @@ public class WebPageTests
         Assert.That(page, Does.Contain("href=\"/?polizza=CF-DEMO-000001\"").And.Contain("SIN-2026-000024"));
         Assert.That(preIstruttoria, Does.Contain("name=\"Modulo.NumeroPolizza\" value=\"CF-DEMO-000001\""));
         Assert.That(inesistente.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+    }
+
+    [Test]
+    public async Task Antifrode_Apertura_MesiPrecompilatiSenzaScansione()
+    {
+        //SETUP
+        var api = new ApiPreparata();
+        await using WebApplicationFactory<WebEntryPoint> factory = Factory(api);
+        using HttpClient client = factory.CreateClient();
+
+        //SUT
+        string page = await client.GetStringAsync("/Antifrode", CancellationToken);
+
+        Assert.That(page, Does.Contain("value=\"12\"").And.Contain("placeholder=\"12\""));
+        Assert.That(api.Richieste.Count(u => u.AbsolutePath == "/api/antifrode/scan"), Is.Zero);
+    }
+
+    [Test]
+    public async Task Antifrode_CercaCoppieConMesiVuoto_ScansioneSuiMesiPredefiniti()
+    {
+        //SETUP
+        var api = new ApiPreparata().Json("/api/antifrode/scan", new RisultatoFraudScan(12, 0.05, [], null, TimeSpan.FromSeconds(1)));
+        await using WebApplicationFactory<WebEntryPoint> factory = Factory(api);
+        using HttpClient client = factory.CreateClient();
+
+        //SUT
+        string page = await client.GetStringAsync("/Antifrode?Mesi=&Soglia=&SoloTesto=false", CancellationToken);
+
+        Assert.That(api.Richieste.Count(u => u.AbsolutePath == "/api/antifrode/scan"), Is.EqualTo(1));
+        Assert.That(page, Does.Contain("Ultimi 12 mesi").And.Contain("value=\"12\""), "il campo torna a mostrare il valore usato");
     }
 
     [Test]

@@ -23,6 +23,7 @@ public class SinistriOptionsTests
         Assert.That(options.EmbeddingDimensions, Is.EqualTo(768));
         Assert.That(options.SogliaDuplicatoCosine, Is.EqualTo(0.05), "tarata in Fase 7 sul fraud-scan");
         Assert.That(options.SogliaDuplicatoDenuncia, Is.EqualTo(0.07), "tarata in Fase 7 sulla nuova denuncia");
+        Assert.That(options.SogliaDuplicatoPolizza, Is.EqualTo(0.30), "solo per i sinistri della stessa polizza");
         Assert.That(options.PromptCaptureDirectory, Is.Null);
         Assert.That(options.Warmup, Is.True);
     }
@@ -40,6 +41,7 @@ public class SinistriOptionsTests
             ["OLLAMA_NUM_GPU"] = "auto",
             ["SOGLIA_DUPLICATO_COSINE"] = "0.12",
             ["SOGLIA_DUPLICATO_DENUNCIA"] = "0.1",
+            ["SOGLIA_DUPLICATO_POLIZZA"] = "0.2",
             ["SINISTRI_WARMUP"] = "false"
         });
 
@@ -53,6 +55,7 @@ public class SinistriOptionsTests
         Assert.That(options.OllamaNumGpu, Is.Null, "auto lascia la scelta a Ollama");
         Assert.That(options.SogliaDuplicatoCosine, Is.EqualTo(0.12));
         Assert.That(options.SogliaDuplicatoDenuncia, Is.EqualTo(0.1));
+        Assert.That(options.SogliaDuplicatoPolizza, Is.EqualTo(0.2));
         Assert.That(options.Warmup, Is.False);
     }
 
@@ -125,6 +128,7 @@ public class SinistriOptionsTests
     [TestCase("OLLAMA_NUM_GPU", "tutti")]
     [TestCase("SOGLIA_DUPLICATO_COSINE", "0,08")]
     [TestCase("SOGLIA_DUPLICATO_DENUNCIA", "3")]
+    [TestCase("SOGLIA_DUPLICATO_POLIZZA", "3")]
     [TestCase("SINISTRI_WARMUP", "si")]
     public void FromConfiguration_ValoreNonValido_ErroreConLaChiave(string key, string value)
     {

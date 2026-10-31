@@ -93,6 +93,7 @@ the code default applies.
 | `EMBEDDING_NUM_GPU` | `0` (CPU) |
 | `SOGLIA_DUPLICATO_COSINE` | `0.05` (fraud scan between claims) |
 | `SOGLIA_DUPLICATO_DENUNCIA` | `0.07` (duplicates of a new claim notice) |
+| `SOGLIA_DUPLICATO_POLIZZA` | `0.30` (duplicates of a new claim notice on the same policy) |
 | `SINISTRI_PROMPT_CAPTURE_DIR` | not set (captures every request sent to the model) |
 | `SINISTRI_WARMUP` | `true` (loads the models when the API starts) |
 

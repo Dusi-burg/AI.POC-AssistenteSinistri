@@ -131,6 +131,7 @@ Controllo deterministico, mai nel prompt: evita che il modello "motivi" su un in
 | Controllo | Vettore | Soglia (manopola) | Periodo |
 |---|---|---|---|
 | nuova denuncia → sinistri esistenti | `EmbeddingAntifrode` (sola descrizione) | `SOGLIA_DUPLICATO_DENUNCIA` = **0,07** | `Retrieval:MesiControlloDuplicati` (24 mesi) |
+| nuova denuncia → sinistri della stessa polizza | `EmbeddingAntifrode` (sola descrizione) | `SOGLIA_DUPLICATO_POLIZZA` = **0,30** | `Retrieval:MesiControlloDuplicati` (24 mesi) |
 | `fraud-scan`: sinistro ↔ sinistro | `Embedding` (con esito di perizia) | `SOGLIA_DUPLICATO_COSINE` = **0,05** | `--mesi` (12) |
 
 Motivo della segnalazione: stesso contraente, stesso riparatore, entrambi, solo testo simile; nella scheda prima i legami, poi la
@@ -186,6 +187,7 @@ gli stessi user-secrets. Senza valore vale il default del codice (`SinistriOptio
 | `EMBEDDING_DIMENSIONS` | `768` | deve coincidere con le colonne `VECTOR` |
 | `SOGLIA_DUPLICATO_COSINE` | `0.05` | fraud-scan |
 | `SOGLIA_DUPLICATO_DENUNCIA` | `0.07` | duplicati della nuova denuncia |
+| `SOGLIA_DUPLICATO_POLIZZA` | `0.30` | duplicati della nuova denuncia sulla stessa polizza |
 | `SINISTRI_PROMPT_CAPTURE_DIR` | — | salva ogni richiesta al modello (D19) |
 | `SINISTRI_WARMUP` | `true` | warm-up dei modelli all'avvio dell'API |
 

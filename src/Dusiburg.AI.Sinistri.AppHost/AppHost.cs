@@ -25,10 +25,27 @@ api.WithConfigurationEnvironment(
     "EMBEDDING_DIMENSIONS",
     "SOGLIA_DUPLICATO_COSINE",
     "SOGLIA_DUPLICATO_DENUNCIA",
+    "SOGLIA_DUPLICATO_POLIZZA",
     "SINISTRI_PROMPT_CAPTURE_DIR",
     "SINISTRI_WARMUP");
 
-var web = builder.AddProject<Projects.Dusiburg_AI_Sinistri_Web>("web")
+// Ollama non è un container: è quello installato sul PC. Se all'avvio non risponde, l'AppHost lo avvia come propria risorsa
+// ("ollama serve") e lo ferma quando si chiude; se è già in esecuzione non lo tocca. Vale solo per l'indirizzo standard su questo
+// PC: un endpoint remoto non si può avviare da qui, e un OLLAMA_ENDPOINT su un'altra porta è lo scenario "Ollama giù" della demo
+// (docs/demo.md). Il default è quello di SinistriOptions.
+var ollamaEndpoint = new Uri(builder.Configuration["OLLAMA_ENDPOINT"] is { Length: > 0 } configured ? configured : "http://127.0.0.1:11434");
+
+if (builder.ExecutionContext.IsRunMode && ollamaEndpoint is { IsLoopback: true, Port: 11434 } && !AppHostExtensions.IsListening(ollamaEndpoint))
+{
+    string ollamaHost = $"{ollamaEndpoint.Host}:{ollamaEndpoint.Port}";
+
+    var ollama = builder.AddExecutable("ollama", "ollama", ".", "serve")
+        .WithEnvironment("OLLAMA_HOST", ollamaHost);
+
+    api.WaitFor(ollama);
+}
+
+var web =builder.AddProject<Projects.Dusiburg_AI_Sinistri_Web>("web")
     .WithReference(api)            // service discovery: la Web chiama http://api
     .WithHttpHealthCheck("/health");
 
@@ -42,6 +59,21 @@ builder.Build().Run();
 
 internal static class AppHostExtensions
 {
+    /// <summary>Qualcuno ascolta già a quell'indirizzo? Una prova di connessione breve, fatta una volta all'avvio.</summary>
+    public static bool IsListening(Uri endpoint)
+    {
+        try
+        {
+            using var client = new System.Net.Sockets.TcpClient();
+
+            return client.ConnectAsync(endpoint.Host, endpoint.Port).Wait(TimeSpan.FromSeconds(1)) && client.Connected;
+        }
+        catch (Exception exception) when (exception is AggregateException or System.Net.Sockets.SocketException)
+        {
+            return false;
+        }
+    }
+
     /// <summary>
     /// Inoltra al servizio le impostazioni presenti nella configurazione dell'AppHost, saltando quelle non valorizzate:
     /// così una variabile della demo si imposta in un solo posto e non va replicata in ogni progetto.

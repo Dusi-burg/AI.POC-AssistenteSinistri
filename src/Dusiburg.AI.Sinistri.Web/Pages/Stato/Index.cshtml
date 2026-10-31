@@ -88,6 +88,7 @@
                 <dt class="col-7">Sinistri simili (top · nel prompt · anni)</dt><dd class="col-5">@configurazione.Retrieval.TopSinistri · @configurazione.Retrieval.SinistriNelPrompt · @configurazione.Retrieval.AnniStorico</dd>
                 <dt class="col-7">Soglia fraud-scan</dt><dd class="col-5">@SinistriPresentation.Distanza(configurazione.SogliaDuplicatoCosine)</dd>
                 <dt class="col-7">Soglia duplicati sulla denuncia</dt><dd class="col-5">@SinistriPresentation.Distanza(configurazione.SogliaDuplicatoDenuncia) · @configurazione.Retrieval.MesiControlloDuplicati mesi</dd>
+                <dt class="col-7">Soglia duplicati sulla stessa polizza</dt><dd class="col-5">@SinistriPresentation.Distanza(configurazione.SogliaDuplicatoPolizza)</dd>
             </dl>
             <p class="small text-muted">Si cambiano sull'AppHost (user-secrets o riga di comando), senza toccare i progetti.</p>
         </div>

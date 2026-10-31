@@ -12,6 +12,7 @@ dotnet run --project src/Dusiburg.AI.Sinistri.Cli -- embed      # 880 vettori su
 dotnet run --project src/Dusiburg.AI.Sinistri.AppHost           # api + web + dashboard
 ```
 
+- Se Ollama non è in esecuzione lo avvia l'AppHost, e lo ferma alla chiusura.
 - Dal dashboard di Aspire si apre la Web (`http://localhost:5202`). `api` e `web` devono essere sane; la pagina **Stato** della Web
   deve essere tutta verde, con l'embedding su CPU e la chat su GPU nel controllo "Posizionamento modelli".
 - L'API fa un **warm-up** all'avvio (un embedding e una risposta minima): il primo utente non aspetta il caricamento del modello di
@@ -30,7 +31,7 @@ dotnet user-secrets set OLLAMA_CHAT_MODEL qwen3.5:9b --project src/Dusiburg.AI.S
 dotnet run --project src/Dusiburg.AI.Sinistri.AppHost -- SOGLIA_DUPLICATO_DENUNCIA=0.10
 ```
 
-Utili in demo: `SOGLIA_DUPLICATO_DENUNCIA` e `SOGLIA_DUPLICATO_COSINE` (più o meno segnalazioni), `SINISTRI_PROMPT_CAPTURE_DIR`
+Utili in demo: `SOGLIA_DUPLICATO_DENUNCIA`, `SOGLIA_DUPLICATO_POLIZZA` e `SOGLIA_DUPLICATO_COSINE` (più o meno segnalazioni), `SINISTRI_PROMPT_CAPTURE_DIR`
 (per mostrare il prompt reale inviato al modello), `OLLAMA_ENDPOINT` su una porta sbagliata (per mostrare cosa succede se Ollama è giù).
 
 ## Polizze demo

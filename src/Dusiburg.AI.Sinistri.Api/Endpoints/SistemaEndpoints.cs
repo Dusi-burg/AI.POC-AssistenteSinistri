@@ -24,7 +24,7 @@ public static class SistemaEndpoints
         group.MapGet("/configurazione", (SinistriOptions opzioni, IOptions<RetrievalOptions> retrieval) =>
             TypedResults.Ok(new ConfigurazioneDemo(
                 opzioni.OllamaChatModel, opzioni.EmbeddingModel, opzioni.EmbeddingProvider, opzioni.EmbeddingDimensions,
-                opzioni.SogliaDuplicatoCosine, opzioni.SogliaDuplicatoDenuncia, retrieval.Value)));
+                opzioni.SogliaDuplicatoCosine, opzioni.SogliaDuplicatoDenuncia, opzioni.SogliaDuplicatoPolizza, retrieval.Value)));
 
         group.MapGet("/scenari-demo", () => TypedResults.Ok(DemoCatalog.Scenari));
 

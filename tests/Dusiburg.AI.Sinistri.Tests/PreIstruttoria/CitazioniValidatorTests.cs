@@ -50,7 +50,7 @@ public class CitazioniValidatorTests
         SchedaValidata validata = CitazioniValidator.Valida(scheda, DatiScheda.Clausole, DatiScheda.Polizza, DatiScheda.Statistiche);
 
         Assert.That(validata.Scheda!.GaranzieOperanti.Single().Articolo, Is.EqualTo("Art. 3.4"));
-        Assert.That(validata.Avvisi.Single().Messaggio, Does.Contain("Art. 3.4 (Esclusione) indicato in garanzie operanti: tipo incoerente"));
+        Assert.That(validata.Avvisi.Single().Messaggio, Does.Contain("Art. 3.4 (Esclusione) indicato in garanzie operanti: tipo incoerente, da verificare se pertinente."));
     }
 
     [Test]

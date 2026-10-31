@@ -12,10 +12,14 @@ public sealed record TabellaValutazioneVista(string Titolo, IReadOnlyList<RigaVa
 
 /// <summary>
 /// fraud-scan dalla UI (fase-8.md §3.4): coppie con le due descrizioni affiancate e, se esistono le coppie attese, la tabella
-/// precision/recall. La scansione parte solo con <c>?mesi=</c> (o lo scenario 6): aprire la pagina non costa nulla.
+/// precision/recall. La scansione parte solo con <c>?mesi=</c>, anche vuoto come lo manda il form, o con lo scenario 6: aprire la
+/// pagina non costa nulla.
 /// </summary>
 public sealed class IndexModel(PreIstruttoriaApiClient api) : PageModel
 {
+    /// <summary>Valore iniziale del campo Mesi, e quello usato se il campo viene svuotato.</summary>
+    public const int MesiPredefiniti = 12;
+
     [BindProperty(SupportsGet = true)]
     public int? Mesi { get; set; }
 
@@ -42,14 +46,21 @@ public sealed class IndexModel(PreIstruttoriaApiClient api) : PageModel
             Mesi = Scenario6.Mesi;
         }
 
-        if (Mesi is not { } mesi)
+        // Il form manda sempre Mesi, anche vuoto: è così che il clic su "Cerca coppie" si distingue dall'apertura della pagina.
+        bool cerca = Mesi is not null || Request.Query.ContainsKey(nameof(Mesi));
+
+        // Senza questa riga asp-for riscrive il valore inviato, e il campo svuotato resterebbe vuoto anche dopo la ricerca.
+        Mesi ??= MesiPredefiniti;
+        ModelState.Remove(nameof(Mesi));
+
+        if (!cerca)
         {
             return;
         }
 
         try
         {
-            Risultato = await api.FraudScanAsync(new RichiestaFraudScan(mesi, Soglia), cancellationToken);
+            Risultato = await api.FraudScanAsync(new RichiestaFraudScan(Mesi.Value, Soglia), cancellationToken);
         }
         catch (ApiProblemaException problema)
         {
